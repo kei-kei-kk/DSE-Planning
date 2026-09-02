@@ -200,14 +200,11 @@
       cursor: pointer;
       user-select: none;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      transition: background-color 0.2s ease, transform 0.15 ease, box-shadow 0.15s ease;
+      transition: background-color 0.2s ease, transform 0.15 ease;
     }
 
-    /* Pulse animation while long pressing to duplicate */
-    .placed-block.duplicating {
-      transform: scale(1.12);
-      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
-      z-index: 10;
+    .placed-block:active {
+      transform: scale(0.96);
     }
 
     .placed-block.grey { 
@@ -281,7 +278,7 @@
     <div class="sample-block-area">
       <div class="sample-block" id="sample-block" draggable="true">1 Block</div>
       <span style="font-size: 0.75rem; color: var(--text-muted);">
-        <strong>Tips:</strong> Drag & Drop to place. <strong>Long press (1.5s)</strong> a block when unlocked to duplicate it continuously. Tap to delete (unlocked) or complete (locked).
+        <strong>Tips:</strong> Drag onto timeline. Tap block to remove/complete. <strong>Long press (0.8s)</strong> to duplicate to next hour!
       </span>
     </div>
 
@@ -324,8 +321,6 @@
   });
 
   let scrollPositions = {};
-  let longPressTimer = null;
-  let isLongPressTriggered = false;
 
   function saveScrollPositions() {
     days.forEach(day => {
@@ -351,6 +346,7 @@
     updateCalculations();
   }
 
+  // Render Daily Timelines (12 AM to 12 PM to 12 AM)
   function renderDays() {
     saveScrollPositions();
 
@@ -372,18 +368,17 @@
       }
 
       let blocksHTML = dayData.blocks.map((b, idx) => {
-        const leftPos = b.startMinutes * 1;
+        const leftPos = b.startMinutes * 1; 
         const timeStr = formatMinutes(b.startMinutes);
         return `
           <div class="placed-block ${dayData.locked ? (b.completed ? 'green' : 'grey') : 'grey'}" 
-               id="block-${day}-${idx}"
                style="left: ${leftPos}px;" 
-               onmousedown="handleBlockPressStart(event, '${day}', ${idx})"
-               onmouseleave="handleBlockPressCancel()"
-               onmouseup="handleBlockPressEnd('${day}', ${idx})"
-               ontouchstart="handleBlockPressStart(event, '${day}', ${idx})"
-               ontouchend="handleBlockPressEnd('${day}', ${idx})"
-               ontouchcancel="handleBlockPressCancel()">
+               onmousedown="startLongPress(event, '${day}', ${idx})"
+               onmouseleave="cancelLongPress()"
+               onmouseup="cancelLongPress()"
+               ontouchstart="startLongPress(event, '${day}', ${idx})"
+               ontouchend="cancelLongPress()"
+               onclick="handleBlockClick('${day}', ${idx})">
             ${dayData.locked && b.completed ? '✓' : timeStr}
           </div>`;
       }).join('');
@@ -419,50 +414,38 @@
     return `${displayH}:${m === 0 ? '00' : m}${ampm}`;
   }
 
-  // Handle Long Press (1.5s) for Duplication
-  function handleBlockPressStart(event, day, index) {
+  // Long-Press Duplicate Logic (0.8s)
+  let longPressTimer = null;
+  let isLongPressTriggered = false;
+
+  function startLongPress(e, day, index) {
+    if (plannerData[day].locked) return; // Disable duplication when day is locked
     isLongPressTriggered = false;
-    const blockEl = document.getElementById(`block-${day}-${index}`);
-    if (blockEl && !plannerData[day].locked) {
-      blockEl.classList.add('duplicating');
-    }
 
     longPressTimer = setTimeout(() => {
       isLongPressTriggered = true;
-      if (blockEl) blockEl.classList.remove('duplicating');
-      duplicateBlockNextSlot(day, index);
-    }, 1500); // 1.5 seconds threshold
+      duplicateBlock(day, index);
+    }, 800); // 0.8 second threshold
   }
 
-  function handleBlockPressCancel() {
-    clearTimeout(longPressTimer);
-    document.querySelectorAll('.placed-block').forEach(el => el.classList.remove('duplicating'));
-  }
-
-  function handleBlockPressEnd(day, index) {
-    clearTimeout(longPressTimer);
-    document.querySelectorAll('.placed-block').forEach(el => el.classList.remove('duplicating'));
-
-    // Only process standard tap action if long press wasn't triggered
-    if (!isLongPressTriggered) {
-      handleBlockClick(day, index);
+  function cancelLongPress() {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
     }
-    isLongPressTriggered = false;
   }
 
-  function duplicateBlockNextSlot(day, index) {
-    if (plannerData[day].locked) return;
+  function duplicateBlock(day, index) {
+    const originalBlock = plannerData[day].blocks[index];
+    if (!originalBlock) return;
 
-    const sourceBlock = plannerData[day].blocks[index];
-    const newStartMins = sourceBlock.startMinutes + 60; // Next continuous 1-hr session
+    // Calculate next session start (1 hour = 60 minutes later)
+    let nextStartMins = originalBlock.startMinutes + 60;
+    if (nextStartMins > 1380) nextStartMins = 1380; // Boundary limit: 11:00 PM max
 
-    if (newStartMins <= 1380) { // Keep within 24hr limit (11:00 PM max start)
-      plannerData[day].blocks.push({ startMinutes: newStartMins, completed: false });
-      // Sort blocks by start time for consistent order
-      plannerData[day].blocks.sort((a, b) => a.startMinutes - b.startMinutes);
-      renderDays();
-      updateCalculations();
-    }
+    plannerData[day].blocks.push({ startMinutes: nextStartMins, completed: false });
+    renderDays();
+    updateCalculations();
   }
 
   function toggleLock(day) {
@@ -471,6 +454,12 @@
   }
 
   function handleBlockClick(day, index) {
+    // Ignore normal tap action if long-press was just triggered
+    if (isLongPressTriggered) {
+      isLongPressTriggered = false;
+      return;
+    }
+
     if (plannerData[day].locked) {
       plannerData[day].blocks[index].completed = !plannerData[day].blocks[index].completed;
     } else {
@@ -480,6 +469,7 @@
     updateCalculations();
   }
 
+  // Drag & Drop Handlers
   function allowDrop(ev) { ev.preventDefault(); }
 
   function handleDrop(ev, day) {
@@ -495,11 +485,11 @@
     if (snappedMins > 1380) snappedMins = 1380;
 
     plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false });
-    plannerData[day].blocks.sort((a, b) => a.startMinutes - b.startMinutes);
     renderDays();
     updateCalculations();
   }
 
+  // Mobile Touch Support
   function setupSampleBlockTouch() {
     const sample = document.getElementById('sample-block');
     let ghostEl = null;
@@ -539,7 +529,6 @@
             if (snappedMins > 1380) snappedMins = 1380;
 
             plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false });
-            plannerData[day].blocks.sort((a, b) => a.startMinutes - b.startMinutes);
             renderDays();
             updateCalculations();
           }
@@ -553,6 +542,7 @@
     }
   }
 
+  // Subject Allocation Logic
   function getWeekTotal() {
     return Object.values(plannerData).reduce((acc, curr) => acc + curr.blocks.length, 0);
   }
