@@ -253,6 +253,10 @@
       border-color: transparent;
     }
 
+    .special-row {
+      background-color: #f8fafc;
+    }
+
     .status-box {
       margin-top: 12px;
       padding: 10px;
@@ -320,11 +324,11 @@
 
   <!-- Subject Allocation Section -->
   <div class="card">
-    <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; color: #334155;">Subject Allocation</div>
+    <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; color: #334155;">Time Allocation</div>
     <table>
       <thead>
         <tr>
-          <th style="text-align: left;">Subject</th>
+          <th style="text-align: left;">Category</th>
           <th>Suggested</th>
           <th>Allocated</th>
           <th>Share</th>
@@ -346,24 +350,26 @@
 <script>
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   
-  const defaultSubjects = [
-    { name: 'Chinese', weight: 0.20, allocation: 0 },
-    { name: 'English', weight: 0.20, allocation: 0 },
-    { name: 'Mathematics', weight: 0.15, allocation: 0 },
-    { name: 'Geography', weight: 0.15, allocation: 0 },
-    { name: 'Biology', weight: 0.15, allocation: 0 },
-    { name: 'Economics', weight: 0.15, allocation: 0 }
+  const defaultItems = [
+    { name: 'Chinese', weight: 0.20, allocation: 0, type: 'subject' },
+    { name: 'English', weight: 0.20, allocation: 0, type: 'subject' },
+    { name: 'Mathematics', weight: 0.15, allocation: 0, type: 'subject' },
+    { name: 'Geography', weight: 0.15, allocation: 0, type: 'subject' },
+    { name: 'Biology', weight: 0.15, allocation: 0, type: 'subject' },
+    { name: 'Economics', weight: 0.15, allocation: 0, type: 'subject' },
+    { name: 'Buffer Time', weight: 0, allocation: 0, type: 'buffer' },
+    { name: 'Extra Learning', weight: 0, allocation: 0, type: 'extra' }
   ];
 
-  let subjects = [];
+  let items = [];
   let plannerData = {};
   let scrollPositions = {};
   let grabOffsetX = 0;
 
-  // Local Storage Logic (Persist Data Across Refresh)
+  // Local Storage Logic
   function loadSavedData() {
     const savedPlanner = localStorage.getItem('hkdse_plannerData');
-    const savedSubjects = localStorage.getItem('hkdse_subjects');
+    const savedItems = localStorage.getItem('hkdse_items');
 
     if (savedPlanner) {
       plannerData = JSON.parse(savedPlanner);
@@ -374,22 +380,22 @@
       });
     }
 
-    if (savedSubjects) {
-      subjects = JSON.parse(savedSubjects);
+    if (savedItems) {
+      items = JSON.parse(savedItems);
     } else {
-      subjects = JSON.parse(JSON.stringify(defaultSubjects));
+      items = JSON.parse(JSON.stringify(defaultItems));
     }
   }
 
   function saveData() {
     localStorage.setItem('hkdse_plannerData', JSON.stringify(plannerData));
-    localStorage.setItem('hkdse_subjects', JSON.stringify(subjects));
+    localStorage.setItem('hkdse_items', JSON.stringify(items));
   }
 
   function clearPlannerData() {
-    if (confirm('Are you sure you want to clear all timeline blocks and subject allocations?')) {
+    if (confirm('Are you sure you want to clear all timeline blocks and allocations?')) {
       localStorage.removeItem('hkdse_plannerData');
-      localStorage.removeItem('hkdse_subjects');
+      localStorage.removeItem('hkdse_items');
       loadSavedData();
       renderDays();
       updateCalculations();
@@ -545,7 +551,6 @@
     updateCalculations();
   }
 
-  // Helper: Convert Left Edge Position (px) to Nearest 30-min Slot
   function calculateLeftEdgeMinutes(leftEdgeX) {
     let snappedMins = Math.round(leftEdgeX / 30) * 30;
     if (snappedMins < 0) snappedMins = 0;
@@ -553,7 +558,6 @@
     return snappedMins;
   }
 
-  // Drag & Drop Handlers (Desktop Mouse)
   function allowDrop(ev) { ev.preventDefault(); }
 
   function handleDrop(ev, day) {
@@ -573,7 +577,6 @@
     updateCalculations();
   }
 
-  // Event Listeners for Sample Block Dragging & Mobile Touch
   function setupSampleBlockEvents() {
     const sample = document.getElementById('sample-block');
     let ghostEl = null;
@@ -635,35 +638,58 @@
     }
   }
 
-  // Subject Allocation Logic
+  // Count active days filled with at least 1 block
+  function getActiveDaysCount() {
+    return Object.values(plannerData).filter(day => day.blocks.length > 0).length;
+  }
+
   function getWeekTotal() {
     return Object.values(plannerData).reduce((acc, curr) => acc + curr.blocks.length, 0);
   }
 
   function updateCalculations() {
     const weekTotal = getWeekTotal();
+    const activeDays = getActiveDaysCount();
     document.getElementById('week-total-display').innerText = weekTotal;
 
-    let remaining = weekTotal;
-    const suggestions = subjects.map((subj, idx) => {
-      if (idx === subjects.length - 1) return remaining;
-      let val = Math.round(weekTotal * subj.weight);
-      remaining -= val;
+    // Buffer: Active Days - 1 (min 0)
+    const bufferSuggested = Math.max(activeDays - 1, 0);
+    // Extra Learning: Active Days
+    const extraSuggested = activeDays;
+
+    // Remaining total for academic subjects after Buffer & Extra
+    const academicTotal = Math.max(weekTotal - bufferSuggested - extraSuggested, 0);
+
+    let remainingSubjectTotal = academicTotal;
+    const subjectsOnly = items.filter(i => i.type === 'subject');
+
+    const suggestions = items.map((item) => {
+      if (item.type === 'buffer') return bufferSuggested;
+      if (item.type === 'extra') return extraSuggested;
+
+      // Calculate subject distribution dynamically
+      const subjectIdx = subjectsOnly.findIndex(s => s.name === item.name);
+      if (subjectIdx === subjectsOnly.length - 1) return remainingSubjectTotal;
+      let val = Math.round(academicTotal * item.weight);
+      remainingSubjectTotal -= val;
       return val;
     });
 
     const tbody = document.getElementById('allocation-tbody');
     tbody.innerHTML = '';
 
-    const totalAllocated = subjects.reduce((sum, s) => sum + (parseInt(s.allocation) || 0), 0);
+    const totalAllocated = items.reduce((sum, item) => sum + (parseInt(item.allocation) || 0), 0);
 
-    subjects.forEach((subj, idx) => {
-      const share = totalAllocated > 0 ? ((subj.allocation / totalAllocated) * 100).toFixed(1) : '0.0';
+    items.forEach((item, idx) => {
+      const share = totalAllocated > 0 ? ((item.allocation / totalAllocated) * 100).toFixed(1) : '0.0';
+      const isSpecial = item.type !== 'subject';
       const tr = document.createElement('tr');
+      if (isSpecial) tr.className = 'special-row';
+
       tr.innerHTML = `
-        <td style="text-align: left; font-weight: 600;">${subj.name}</td>
+        <td style="text-align: left; font-weight: 600; ${isSpecial ? 'color: var(--primary-dark);' : ''}">${item.name}</td>
         <td>${suggestions[idx]}</td>
-        <td><input type="number" min="0" value="${subj.allocation}" onchange="updateAllocation(${idx}, this.value)"></td>
+        <td><input type="number" min="0" value="${item.allocation}" onchange="updateAllocation(${idx}, this.value)"></td>
         <td>${share}%</td>
       `;
       tbody.appendChild(tr);
@@ -673,7 +699,7 @@
   }
 
   function updateAllocation(index, val) {
-    subjects[index].allocation = parseInt(val) || 0;
+    items[index].allocation = parseInt(val) || 0;
     saveData();
     updateCalculations();
   }
