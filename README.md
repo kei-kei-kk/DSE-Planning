@@ -7,15 +7,19 @@
   <title>HKDSE Revision Planner Calculator</title>
   <style>
     :root {
-      --bg: #f3f4f6;
+      /* Calming Study-Focused Blue Palette */
+      --bg: #f0f4f8;
       --card-bg: #ffffff;
-      --primary: #2563eb;
+      --primary: #3b82f6;
       --primary-dark: #1d4ed8;
-      --text: #1f2937;
-      --text-muted: #6b7280;
-      --border: #e5e7eb;
-      --block-grey: #9ca3af;
-      --block-blue: #2563eb;
+      --accent-blue: #60a5fa;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+      
+      /* Block Colors - Soft/Gentle Tones */
+      --block-grey: #94a3b8;      /* Soft Slate Grey (Planned) */
+      --block-green: #34d399;     /* Gentle Sage/Emerald Green (Completed) */
       --danger: #ef4444;
       --success: #10b981;
     }
@@ -30,9 +34,12 @@
     }
 
     body {
-      background-color: var(--bg);
+      /* Soft Slate Blue Background for enhanced study focus */
+      background-color: #e2e8f0;
+      background-image: linear-gradient(135deg, #e2e8f0 0%, #dbeafe 100%);
+      min-height: 100vh;
       color: var(--text);
-      padding: 10px;
+      padding: 12px;
       padding-bottom: 40px;
     }
 
@@ -42,51 +49,55 @@
     }
 
     h1 {
-      font-size: 1.2rem;
+      font-size: 1.25rem;
       text-align: center;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      color: #0f172a;
+      font-weight: 700;
     }
 
     .card {
       background: var(--card-bg);
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 12px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(226, 232, 240, 0.8);
     }
 
     .total-banner {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: linear-gradient(135deg, #1e40af, #3b82f6);
+      /* Muted, non-distracting study blue banner */
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
       color: white;
-      padding: 12px 16px;
+      padding: 14px 18px;
       border-radius: 10px;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
     }
 
     .total-banner .value {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       font-weight: 700;
     }
 
-    /* Draggable Source Area */
+    /* Draggable Sample Block Area */
     .sample-block-area {
       display: flex;
       align-items: center;
       gap: 12px;
       background: #eff6ff;
-      border: 2px dashed #93c5fd;
-      padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 14px;
+      border: 2px dashed #bfdbfe;
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin-bottom: 16px;
     }
 
     .sample-block {
-      width: 70px;
-      height: 36px;
+      width: 75px;
+      height: 38px;
       background: var(--block-grey);
       color: white;
       font-weight: 600;
@@ -97,36 +108,45 @@
       justify-content: center;
       cursor: grab;
       user-select: none;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.12);
       touch-action: none;
+      flex-shrink: 0;
     }
 
-    /* Daily Rows */
+    /* Daily Timelines */
     .day-row {
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
+      padding-bottom: 10px;
+    }
+
+    .day-row:last-child {
+      border-bottom: none;
     }
 
     .day-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
     .day-title {
       font-weight: 700;
       font-size: 0.9rem;
+      color: #334155;
     }
 
     .lock-btn {
-      background: #f3f4f6;
+      background: #f1f5f9;
       border: 1px solid var(--border);
-      padding: 4px 8px;
+      padding: 4px 10px;
       border-radius: 6px;
       font-size: 0.75rem;
+      font-weight: 600;
       cursor: pointer;
+      color: #475569;
+      transition: all 0.2s ease;
     }
 
     .lock-btn.locked {
@@ -135,27 +155,29 @@
       border-color: #93c5fd;
     }
 
-    /* Timeline Styling */
+    /* Scrollable Timeline */
     .timeline-wrapper {
       overflow-x: auto;
-      background: #fafafa;
+      background: #f8fafc;
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 8px;
       padding: 4px;
+      /* Smooth horizontal scrolling for touch devices */
+      -webkit-overflow-scrolling: touch;
     }
 
     .timeline-track {
       position: relative;
-      width: 1440px; /* 24 hours * 60px/hr */
+      width: 1440px; /* 24 hrs * 60px/hr */
       height: 48px;
-      background-size: 30px 100%; /* 30-min grid lines */
-      background-image: linear-gradient(to right, #e5e7eb 1px, transparent 1px);
+      background-size: 30px 100%; /* Grid lines every 30 mins */
+      background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px);
     }
 
     .time-labels {
       position: relative;
       width: 1440px;
-      height: 18px;
+      height: 20px;
       border-bottom: 1px solid var(--border);
     }
 
@@ -164,6 +186,7 @@
       font-size: 0.65rem;
       color: var(--text-muted);
       transform: translateX(-50%);
+      font-weight: 500;
     }
 
     .placed-block {
@@ -171,7 +194,7 @@
       top: 4px;
       height: 40px;
       width: 60px; /* 1 Hour = 60px */
-      border-radius: 4px;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -180,11 +203,21 @@
       color: white;
       cursor: pointer;
       user-select: none;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background-color 0.2s ease, transform 0.1s ease;
     }
 
-    .placed-block.grey { background-color: var(--block-grey); }
-    .placed-block.blue { background-color: var(--block-blue); }
+    /* Soft Slate Grey for Planned state */
+    .placed-block.grey { 
+      background-color: var(--block-grey); 
+    }
+    
+    /* Gentle Sage Green for Completed state */
+    .placed-block.green { 
+      background-color: var(--block-green); 
+      color: #064e3b;
+      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+    }
 
     /* Allocation Table */
     table {
@@ -199,26 +232,37 @@
       text-align: center;
     }
 
-    th { color: var(--text-muted); font-size: 0.75rem; }
+    th { 
+      color: var(--text-muted); 
+      font-size: 0.75rem; 
+      font-weight: 600;
+    }
 
     td input {
       width: 55px;
-      padding: 4px;
+      padding: 6px;
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: 6px;
       text-align: center;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    td input:focus {
+      outline: 2px solid var(--primary);
+      border-color: transparent;
     }
 
     .status-box {
-      margin-top: 10px;
-      padding: 8px;
-      border-radius: 6px;
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 8px;
       font-size: 0.8rem;
       font-weight: 600;
       display: none;
     }
-    .status-box.error { display: block; background: #fef2f2; color: var(--danger); }
-    .status-box.success { display: block; background: #ecfdf5; color: var(--success); }
+    .status-box.error { display: block; background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+    .status-box.success { display: block; background: #ecfdf5; color: var(--success); border: 1px solid #a7f3d0; }
   </style>
 </head>
 <body>
@@ -232,11 +276,11 @@
       <span class="value" id="week-total-display">0</span>
     </div>
 
-    <!-- Unlimited Drag Block Source -->
+    <!-- Unlimited Sample Block Source -->
     <div class="sample-block-area">
       <div class="sample-block" id="sample-block" draggable="true">1 Block</div>
       <span style="font-size: 0.75rem; color: var(--text-muted);">
-        <strong>Drag & Drop:</strong> Drag block onto any timeline slot (:00 or :30). Tap placed blocks to delete (unlocked) or complete (locked).
+        <strong>Drag & Drop:</strong> Drag onto any timeline slot (:00 or :30). Tap placed blocks to delete (unlocked) or complete (locked).
       </span>
     </div>
 
@@ -245,7 +289,7 @@
 
   <!-- Subject Allocation Section -->
   <div class="card">
-    <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 8px;">Subject Allocation</div>
+    <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; color: #334155;">Subject Allocation</div>
     <table>
       <thead>
         <tr>
@@ -264,7 +308,7 @@
 <script>
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   
-  // DSE Fixed Subjects with Recommended Weightings (Ref: Images 1-2)
+  // Fixed HKDSE Core + Electives with Weightings
   let subjects = [
     { name: 'Chinese', weight: 0.20, allocation: 0 },
     { name: 'English', weight: 0.20, allocation: 0 },
@@ -279,6 +323,27 @@
     plannerData[day] = { blocks: [], locked: false };
   });
 
+  // Track scroll positions for timelines to prevent auto-resetting
+  let scrollPositions = {};
+
+  function saveScrollPositions() {
+    days.forEach(day => {
+      const wrapper = document.getElementById(`wrapper-${day}`);
+      if (wrapper) {
+        scrollPositions[day] = wrapper.scrollLeft;
+      }
+    });
+  }
+
+  function restoreScrollPositions() {
+    days.forEach(day => {
+      const wrapper = document.getElementById(`wrapper-${day}`);
+      if (wrapper && scrollPositions[day] !== undefined) {
+        wrapper.scrollLeft = scrollPositions[day];
+      }
+    });
+  }
+
   function init() {
     renderDays();
     setupSampleBlockTouch();
@@ -287,6 +352,8 @@
 
   // Render Daily Timelines (12 AM to 12 PM to 12 AM)
   function renderDays() {
+    saveScrollPositions(); // Preserve timeline scroll offsets before re-render
+
     const container = document.getElementById('days-container');
     container.innerHTML = '';
 
@@ -310,7 +377,7 @@
         const leftPos = b.startMinutes * 1; // 1 min = 1px, 60px per hour
         const timeStr = formatMinutes(b.startMinutes);
         return `
-          <div class="placed-block ${dayData.locked ? (b.completed ? 'blue' : 'grey') : 'grey'}" 
+          <div class="placed-block ${dayData.locked ? (b.completed ? 'green' : 'grey') : 'grey'}" 
                style="left: ${leftPos}px;" 
                onclick="handleBlockClick('${day}', ${idx})">
             ${dayData.locked && b.completed ? '✓' : timeStr}
@@ -320,14 +387,14 @@
       row.innerHTML = `
         <div class="day-header">
           <span class="day-title">${day}</span>
-          <span style="font-size: 0.75rem; color: var(--text-muted);">
+          <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
             ${dayData.locked ? `Done: ${doneCount} / ` : ''}${totalCount} Blocks
           </span>
           <button class="lock-btn ${dayData.locked ? 'locked' : ''}" onclick="toggleLock('${day}')">
             ${dayData.locked ? '🔒 Locked' : '🔓 Lock'}
           </button>
         </div>
-        <div class="timeline-wrapper" ondragover="allowDrop(event)" ondrop="handleDrop(event, '${day}')">
+        <div class="timeline-wrapper" id="wrapper-${day}" ondragover="allowDrop(event)" ondrop="handleDrop(event, '${day}')">
           <div class="time-labels">${labelsHTML}</div>
           <div class="timeline-track" id="track-${day}">
             ${blocksHTML}
@@ -336,6 +403,8 @@
       `;
       container.appendChild(row);
     });
+
+    restoreScrollPositions(); // Restore exact scroll position after rendering
   }
 
   function formatMinutes(mins) {
@@ -384,7 +453,7 @@
     updateCalculations();
   }
 
-  // Touch Support for iPad / Mobile Drag-and-Drop
+  // Touch Support for Mobile & iPad Drag-and-Drop
   function setupSampleBlockTouch() {
     const sample = document.getElementById('sample-block');
     let ghostEl = null;
@@ -393,7 +462,7 @@
       const touch = e.touches[0];
       ghostEl = sample.cloneNode(true);
       ghostEl.style.position = 'fixed';
-      ghostEl.style.opacity = '0.8';
+      ghostEl.style.opacity = '0.85';
       ghostEl.style.pointerEvents = 'none';
       ghostEl.style.zIndex = '1000';
       document.body.appendChild(ghostEl);
@@ -432,12 +501,12 @@
     });
 
     function moveGhost(touch) {
-      ghostEl.style.left = `${touch.clientX - 35}px`;
-      ghostEl.style.top = `${touch.clientY - 18}px`;
+      ghostEl.style.left = `${touch.clientX - 37}px`;
+      ghostEl.style.top = `${touch.clientY - 19}px`;
     }
   }
 
-  // Calculations & Subject Suggestions
+  // Calculations & Dynamic Suggestions
   function getWeekTotal() {
     return Object.values(plannerData).reduce((acc, curr) => acc + curr.blocks.length, 0);
   }
@@ -449,7 +518,7 @@
     // Calculate Suggested Blocks to sum EXACTLY to Week Total
     let remaining = weekTotal;
     const suggestions = subjects.map((subj, idx) => {
-      if (idx === subjects.length - 1) return remaining; // Final subject takes remainder
+      if (idx === subjects.length - 1) return remaining; // Final subject takes exact remainder
       let val = Math.round(weekTotal * subj.weight);
       remaining -= val;
       return val;
