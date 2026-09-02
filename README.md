@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -278,7 +277,7 @@
     <div class="sample-block-area">
       <div class="sample-block" id="sample-block" draggable="true">1 Block</div>
       <span style="font-size: 0.75rem; color: var(--text-muted);">
-        <strong>Placement:</strong> Block starts where its left edge lands. Tap to remove/complete. <strong>Long press (0.8s)</strong> to duplicate!
+        <strong>Placement:</strong> Block snaps accurately based on its left edge. Tap to remove/complete. <strong>Long press (0.8s)</strong> to duplicate!
       </span>
     </div>
 
@@ -321,6 +320,7 @@
   });
 
   let scrollPositions = {};
+  let grabOffsetX = 0; // Tracks cursor offset relative to block's left edge
 
   function saveScrollPositions() {
     days.forEach(day => {
@@ -342,7 +342,7 @@
 
   function init() {
     renderDays();
-    setupSampleBlockTouch();
+    setupSampleBlockEvents();
     updateCalculations();
   }
 
@@ -467,15 +467,15 @@
     updateCalculations();
   }
 
-  // Helper: Snap Left Edge X Position to Nearest 30-min Slot
+  // Helper: Convert Left Edge Position (px) to Nearest 30-min Slot
   function calculateLeftEdgeMinutes(leftEdgeX) {
     let snappedMins = Math.round(leftEdgeX / 30) * 30;
     if (snappedMins < 0) snappedMins = 0;
-    if (snappedMins > 1380) snappedMins = 1380; // Max start 11:00 PM
+    if (snappedMins > 1380) snappedMins = 1380;
     return snappedMins;
   }
 
-  // Drag & Drop Handlers (HTML5 Mouse Drag)
+  // Drag & Drop Handlers (Desktop Mouse)
   function allowDrop(ev) { ev.preventDefault(); }
 
   function handleDrop(ev, day) {
@@ -485,22 +485,33 @@
     const track = document.getElementById(`track-${day}`);
     const rect = track.getBoundingClientRect();
     
-    // Position determined strictly by the left edge of the block
-    const leftEdgeX = ev.clientX - rect.left;
-    const snappedMins = calculateLeftEdgeMinutes(leftEdgeX);
+    // Exact left edge of block = Mouse X - Track Left - Grab Offset
+    const cursorXOnTrack = ev.clientX - rect.left;
+    const actualLeftEdgeX = cursorXOnTrack - grabOffsetX;
+    const snappedMins = calculateLeftEdgeMinutes(actualLeftEdgeX);
 
     plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false });
     renderDays();
     updateCalculations();
   }
 
-  // Mobile Touch Support (iPad & Phone)
-  function setupSampleBlockTouch() {
+  // Event Listeners for Sample Block Dragging & Mobile Touch
+  function setupSampleBlockEvents() {
     const sample = document.getElementById('sample-block');
     let ghostEl = null;
 
+    // Track grab offset when mouse drag starts
+    sample.addEventListener('dragstart', (e) => {
+      const rect = sample.getBoundingClientRect();
+      grabOffsetX = e.clientX - rect.left;
+    });
+
+    // Touch Support for Mobile / iPad
     sample.addEventListener('touchstart', (e) => {
       const touch = e.touches[0];
+      const rect = sample.getBoundingClientRect();
+      grabOffsetX = touch.clientX - rect.left;
+
       ghostEl = sample.cloneNode(true);
       ghostEl.style.position = 'fixed';
       ghostEl.style.opacity = '0.85';
@@ -529,9 +540,10 @@
             
             if (plannerData[day].locked) return;
             
-            // Touch alignment: left edge of the dragged ghost block
-            const leftEdgeX = (touch.clientX - 37) - rect.left;
-            const snappedMins = calculateLeftEdgeMinutes(leftEdgeX);
+            // Calculate exact left edge position for touch drops
+            const cursorXOnTrack = touch.clientX - rect.left;
+            const actualLeftEdgeX = cursorXOnTrack - grabOffsetX;
+            const snappedMins = calculateLeftEdgeMinutes(actualLeftEdgeX);
 
             plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false });
             renderDays();
@@ -542,8 +554,7 @@
     });
 
     function moveGhost(touch) {
-      // Offset touch so cursor/finger aligns with the left portion of ghost block
-      ghostEl.style.left = `${touch.clientX - 10}px`;
+      ghostEl.style.left = `${touch.clientX - grabOffsetX}px`;
       ghostEl.style.top = `${touch.clientY - 19}px`;
     }
   }
