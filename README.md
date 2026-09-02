@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -32,7 +33,6 @@
     }
 
     body {
-      /* Soft Slate Blue Background for enhanced study focus */
       background-color: #e2e8f0;
       background-image: linear-gradient(135deg, #e2e8f0 0%, #dbeafe 100%);
       min-height: 100vh;
@@ -67,7 +67,6 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      /* Muted, non-distracting study blue banner */
       background: linear-gradient(135deg, #2563eb, #3b82f6);
       color: white;
       padding: 14px 18px;
@@ -160,7 +159,6 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 4px;
-      /* Smooth horizontal scrolling for touch devices */
       -webkit-overflow-scrolling: touch;
     }
 
@@ -202,15 +200,20 @@
       cursor: pointer;
       user-select: none;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      transition: background-color 0.2s ease, transform 0.1s ease;
+      transition: background-color 0.2s ease, transform 0.15 ease, box-shadow 0.15s ease;
     }
 
-    /* Soft Slate Grey for Planned state */
+    /* Pulse animation while long pressing to duplicate */
+    .placed-block.duplicating {
+      transform: scale(1.12);
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+      z-index: 10;
+    }
+
     .placed-block.grey { 
       background-color: var(--block-grey); 
     }
     
-    /* Gentle Sage Green for Completed state */
     .placed-block.green { 
       background-color: var(--block-green); 
       color: #064e3b;
@@ -278,7 +281,7 @@
     <div class="sample-block-area">
       <div class="sample-block" id="sample-block" draggable="true">1 Block</div>
       <span style="font-size: 0.75rem; color: var(--text-muted);">
-        <strong>Drag & Drop:</strong> Drag onto any timeline slot (:00 or :30). Tap placed blocks to delete (unlocked) or complete (locked).
+        <strong>Tips:</strong> Drag & Drop to place. <strong>Long press (1.5s)</strong> a block when unlocked to duplicate it continuously. Tap to delete (unlocked) or complete (locked).
       </span>
     </div>
 
@@ -306,7 +309,6 @@
 <script>
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   
-  // Fixed HKDSE Core + Electives with Weightings
   let subjects = [
     { name: 'Chinese', weight: 0.20, allocation: 0 },
     { name: 'English', weight: 0.20, allocation: 0 },
@@ -321,8 +323,9 @@
     plannerData[day] = { blocks: [], locked: false };
   });
 
-  // Track scroll positions for timelines to prevent auto-resetting
   let scrollPositions = {};
+  let longPressTimer = null;
+  let isLongPressTriggered = false;
 
   function saveScrollPositions() {
     days.forEach(day => {
@@ -348,9 +351,8 @@
     updateCalculations();
   }
 
-  // Render Daily Timelines (12 AM to 12 PM to 12 AM)
   function renderDays() {
-    saveScrollPositions(); // Preserve timeline scroll offsets before re-render
+    saveScrollPositions();
 
     const container = document.getElementById('days-container');
     container.innerHTML = '';
@@ -363,21 +365,25 @@
       const totalCount = dayData.blocks.length;
       const doneCount = dayData.blocks.filter(b => b.completed).length;
 
-      // Render 24-hour time labels
       let labelsHTML = '';
       for (let h = 0; h <= 24; h += 2) {
         let labelText = h === 0 || h === 24 ? '12AM' : h === 12 ? '12PM' : h > 12 ? `${h-12}PM` : `${h}AM`;
         labelsHTML += `<div class="time-label" style="left: ${h * 60}px;">${labelText}</div>`;
       }
 
-      // Render placed blocks
       let blocksHTML = dayData.blocks.map((b, idx) => {
-        const leftPos = b.startMinutes * 1; // 1 min = 1px, 60px per hour
+        const leftPos = b.startMinutes * 1;
         const timeStr = formatMinutes(b.startMinutes);
         return `
           <div class="placed-block ${dayData.locked ? (b.completed ? 'green' : 'grey') : 'grey'}" 
+               id="block-${day}-${idx}"
                style="left: ${leftPos}px;" 
-               onclick="handleBlockClick('${day}', ${idx})">
+               onmousedown="handleBlockPressStart(event, '${day}', ${idx})"
+               onmouseleave="handleBlockPressCancel()"
+               onmouseup="handleBlockPressEnd('${day}', ${idx})"
+               ontouchstart="handleBlockPressStart(event, '${day}', ${idx})"
+               ontouchend="handleBlockPressEnd('${day}', ${idx})"
+               ontouchcancel="handleBlockPressCancel()">
             ${dayData.locked && b.completed ? '✓' : timeStr}
           </div>`;
       }).join('');
@@ -402,7 +408,7 @@
       container.appendChild(row);
     });
 
-    restoreScrollPositions(); // Restore exact scroll position after rendering
+    restoreScrollPositions();
   }
 
   function formatMinutes(mins) {
@@ -413,13 +419,57 @@
     return `${displayH}:${m === 0 ? '00' : m}${ampm}`;
   }
 
-  // Lock / Unlock Toggle
+  // Handle Long Press (1.5s) for Duplication
+  function handleBlockPressStart(event, day, index) {
+    isLongPressTriggered = false;
+    const blockEl = document.getElementById(`block-${day}-${index}`);
+    if (blockEl && !plannerData[day].locked) {
+      blockEl.classList.add('duplicating');
+    }
+
+    longPressTimer = setTimeout(() => {
+      isLongPressTriggered = true;
+      if (blockEl) blockEl.classList.remove('duplicating');
+      duplicateBlockNextSlot(day, index);
+    }, 1500); // 1.5 seconds threshold
+  }
+
+  function handleBlockPressCancel() {
+    clearTimeout(longPressTimer);
+    document.querySelectorAll('.placed-block').forEach(el => el.classList.remove('duplicating'));
+  }
+
+  function handleBlockPressEnd(day, index) {
+    clearTimeout(longPressTimer);
+    document.querySelectorAll('.placed-block').forEach(el => el.classList.remove('duplicating'));
+
+    // Only process standard tap action if long press wasn't triggered
+    if (!isLongPressTriggered) {
+      handleBlockClick(day, index);
+    }
+    isLongPressTriggered = false;
+  }
+
+  function duplicateBlockNextSlot(day, index) {
+    if (plannerData[day].locked) return;
+
+    const sourceBlock = plannerData[day].blocks[index];
+    const newStartMins = sourceBlock.startMinutes + 60; // Next continuous 1-hr session
+
+    if (newStartMins <= 1380) { // Keep within 24hr limit (11:00 PM max start)
+      plannerData[day].blocks.push({ startMinutes: newStartMins, completed: false });
+      // Sort blocks by start time for consistent order
+      plannerData[day].blocks.sort((a, b) => a.startMinutes - b.startMinutes);
+      renderDays();
+      updateCalculations();
+    }
+  }
+
   function toggleLock(day) {
     plannerData[day].locked = !plannerData[day].locked;
     renderDays();
   }
 
-  // Block Interaction: Tap to Complete (Locked) or Remove (Unlocked)
   function handleBlockClick(day, index) {
     if (plannerData[day].locked) {
       plannerData[day].blocks[index].completed = !plannerData[day].blocks[index].completed;
@@ -430,7 +480,6 @@
     updateCalculations();
   }
 
-  // HTML5 Drag & Drop Logic
   function allowDrop(ev) { ev.preventDefault(); }
 
   function handleDrop(ev, day) {
@@ -441,17 +490,16 @@
     const rect = track.getBoundingClientRect();
     const dropX = ev.clientX - rect.left;
 
-    // Snap to nearest 30 mins (30px = 30 mins)
     let snappedMins = Math.floor(dropX / 30) * 30;
     if (snappedMins < 0) snappedMins = 0;
-    if (snappedMins > 1380) snappedMins = 1380; // Max start 11:00 PM
+    if (snappedMins > 1380) snappedMins = 1380;
 
     plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false });
+    plannerData[day].blocks.sort((a, b) => a.startMinutes - b.startMinutes);
     renderDays();
     updateCalculations();
   }
 
-  // Touch Support for Mobile & iPad Drag-and-Drop
   function setupSampleBlockTouch() {
     const sample = document.getElementById('sample-block');
     let ghostEl = null;
@@ -491,6 +539,7 @@
             if (snappedMins > 1380) snappedMins = 1380;
 
             plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false });
+            plannerData[day].blocks.sort((a, b) => a.startMinutes - b.startMinutes);
             renderDays();
             updateCalculations();
           }
@@ -504,7 +553,6 @@
     }
   }
 
-  // Calculations & Dynamic Suggestions
   function getWeekTotal() {
     return Object.values(plannerData).reduce((acc, curr) => acc + curr.blocks.length, 0);
   }
@@ -513,16 +561,14 @@
     const weekTotal = getWeekTotal();
     document.getElementById('week-total-display').innerText = weekTotal;
 
-    // Calculate Suggested Blocks to sum EXACTLY to Week Total
     let remaining = weekTotal;
     const suggestions = subjects.map((subj, idx) => {
-      if (idx === subjects.length - 1) return remaining; // Final subject takes exact remainder
+      if (idx === subjects.length - 1) return remaining;
       let val = Math.round(weekTotal * subj.weight);
       remaining -= val;
       return val;
     });
 
-    // Render Table
     const tbody = document.getElementById('allocation-tbody');
     tbody.innerHTML = '';
 
