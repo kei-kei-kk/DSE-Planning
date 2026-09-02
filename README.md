@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -199,7 +200,7 @@
       cursor: pointer;
       user-select: none;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      transition: background-color 0.2s ease, transform 0.15 ease;
+      transition: background-color 0.2s ease, transform 0.15s ease;
     }
 
     .placed-block:active {
@@ -277,7 +278,7 @@
     <div class="sample-block-area">
       <div class="sample-block" id="sample-block" draggable="true">1 Block</div>
       <span style="font-size: 0.75rem; color: var(--text-muted);">
-        <strong>Tips:</strong> Drag onto timeline. Tap block to remove/complete. <strong>Long press (0.8s)</strong> to duplicate to next hour!
+        <strong>Placement:</strong> Block starts where its left edge lands. Tap to remove/complete. <strong>Long press (0.8s)</strong> to duplicate!
       </span>
     </div>
 
@@ -418,13 +419,13 @@
   let isLongPressTriggered = false;
 
   function startLongPress(e, day, index) {
-    if (plannerData[day].locked) return; // Disable duplication when day is locked
+    if (plannerData[day].locked) return;
     isLongPressTriggered = false;
 
     longPressTimer = setTimeout(() => {
       isLongPressTriggered = true;
       duplicateBlock(day, index);
-    }, 800); // 0.8 second threshold
+    }, 800);
   }
 
   function cancelLongPress() {
@@ -438,9 +439,8 @@
     const originalBlock = plannerData[day].blocks[index];
     if (!originalBlock) return;
 
-    // Calculate next session start (1 hour = 60 minutes later)
     let nextStartMins = originalBlock.startMinutes + 60;
-    if (nextStartMins > 1380) nextStartMins = 1380; // Boundary limit: 11:00 PM max
+    if (nextStartMins > 1380) nextStartMins = 1380;
 
     plannerData[day].blocks.push({ startMinutes: nextStartMins, completed: false });
     renderDays();
@@ -453,7 +453,6 @@
   }
 
   function handleBlockClick(day, index) {
-    // Ignore normal tap action if long-press was just triggered
     if (isLongPressTriggered) {
       isLongPressTriggered = false;
       return;
@@ -468,7 +467,15 @@
     updateCalculations();
   }
 
-  // Drag & Drop Handlers
+  // Helper: Snap Left Edge X Position to Nearest 30-min Slot
+  function calculateLeftEdgeMinutes(leftEdgeX) {
+    let snappedMins = Math.round(leftEdgeX / 30) * 30;
+    if (snappedMins < 0) snappedMins = 0;
+    if (snappedMins > 1380) snappedMins = 1380; // Max start 11:00 PM
+    return snappedMins;
+  }
+
+  // Drag & Drop Handlers (HTML5 Mouse Drag)
   function allowDrop(ev) { ev.preventDefault(); }
 
   function handleDrop(ev, day) {
@@ -477,18 +484,17 @@
 
     const track = document.getElementById(`track-${day}`);
     const rect = track.getBoundingClientRect();
-    const dropX = ev.clientX - rect.left;
-
-    let snappedMins = Math.floor(dropX / 30) * 30;
-    if (snappedMins < 0) snappedMins = 0;
-    if (snappedMins > 1380) snappedMins = 1380;
+    
+    // Position determined strictly by the left edge of the block
+    const leftEdgeX = ev.clientX - rect.left;
+    const snappedMins = calculateLeftEdgeMinutes(leftEdgeX);
 
     plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false });
     renderDays();
     updateCalculations();
   }
 
-  // Mobile Touch Support
+  // Mobile Touch Support (iPad & Phone)
   function setupSampleBlockTouch() {
     const sample = document.getElementById('sample-block');
     let ghostEl = null;
@@ -522,10 +528,10 @@
               touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
             
             if (plannerData[day].locked) return;
-            const dropX = touch.clientX - rect.left;
-            let snappedMins = Math.floor(dropX / 30) * 30;
-            if (snappedMins < 0) snappedMins = 0;
-            if (snappedMins > 1380) snappedMins = 1380;
+            
+            // Touch alignment: left edge of the dragged ghost block
+            const leftEdgeX = (touch.clientX - 37) - rect.left;
+            const snappedMins = calculateLeftEdgeMinutes(leftEdgeX);
 
             plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false });
             renderDays();
@@ -536,7 +542,8 @@
     });
 
     function moveGhost(touch) {
-      ghostEl.style.left = `${touch.clientX - 37}px`;
+      // Offset touch so cursor/finger aligns with the left portion of ghost block
+      ghostEl.style.left = `${touch.clientX - 10}px`;
       ghostEl.style.top = `${touch.clientY - 19}px`;
     }
   }
