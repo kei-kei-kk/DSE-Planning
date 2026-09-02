@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -19,6 +20,9 @@
       --block-grey: #94a3b8;      /* Soft Slate Grey (Planned) */
       --block-green: #34d399;     /* Gentle Sage/Emerald Green (Completed) */
       --danger: #ef4444;
+      --danger-soft: #fef2f2;
+      --danger-border: #fecaca;
+      --danger-hover: #fee2e2;
       --success: #10b981;
     }
 
@@ -260,6 +264,37 @@
     }
     .status-box.error { display: block; background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
     .status-box.success { display: block; background: #ecfdf5; color: var(--success); border: 1px solid #a7f3d0; }
+
+    /* Gentle Red Reset Button */
+    .reset-area {
+      display: flex;
+      justify-content: center;
+      margin-top: 18px;
+      margin-bottom: 12px;
+    }
+
+    .reset-btn {
+      background-color: var(--danger-soft);
+      color: var(--danger);
+      border: 1px solid var(--danger-border);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.825rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .reset-btn:hover {
+      background-color: var(--danger-hover);
+    }
+
+    .reset-btn:active {
+      transform: scale(0.98);
+    }
   </style>
 </head>
 <body>
@@ -300,12 +335,19 @@
     </table>
     <div id="validation-msg" class="status-box"></div>
   </div>
+
+  <!-- Clear Record Reset Area -->
+  <div class="reset-area">
+    <button class="reset-btn" onclick="clearPlannerData()">
+      🗑 Clear All Records & Reset
+    </button>
+  </div>
 </div>
 
 <script>
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   
-  let subjects = [
+  const defaultSubjects = [
     { name: 'Chinese', weight: 0.20, allocation: 0 },
     { name: 'English', weight: 0.20, allocation: 0 },
     { name: 'Mathematics', weight: 0.15, allocation: 0 },
@@ -314,13 +356,46 @@
     { name: 'Economics', weight: 0.15, allocation: 0 }
   ];
 
+  let subjects = [];
   let plannerData = {};
-  days.forEach(day => {
-    plannerData[day] = { blocks: [], locked: false };
-  });
-
   let scrollPositions = {};
-  let grabOffsetX = 0; // Tracks cursor offset relative to block's left edge
+  let grabOffsetX = 0;
+
+  // Local Storage Logic (Persist Data Across Refresh)
+  function loadSavedData() {
+    const savedPlanner = localStorage.getItem('hkdse_plannerData');
+    const savedSubjects = localStorage.getItem('hkdse_subjects');
+
+    if (savedPlanner) {
+      plannerData = JSON.parse(savedPlanner);
+    } else {
+      plannerData = {};
+      days.forEach(day => {
+        plannerData[day] = { blocks: [], locked: false };
+      });
+    }
+
+    if (savedSubjects) {
+      subjects = JSON.parse(savedSubjects);
+    } else {
+      subjects = JSON.parse(JSON.stringify(defaultSubjects));
+    }
+  }
+
+  function saveData() {
+    localStorage.setItem('hkdse_plannerData', JSON.stringify(plannerData));
+    localStorage.setItem('hkdse_subjects', JSON.stringify(subjects));
+  }
+
+  function clearPlannerData() {
+    if (confirm('Are you sure you want to clear all timeline blocks and subject allocations?')) {
+      localStorage.removeItem('hkdse_plannerData');
+      localStorage.removeItem('hkdse_subjects');
+      loadSavedData();
+      renderDays();
+      updateCalculations();
+    }
+  }
 
   function saveScrollPositions() {
     days.forEach(day => {
@@ -341,6 +416,7 @@
   }
 
   function init() {
+    loadSavedData();
     renderDays();
     setupSampleBlockEvents();
     updateCalculations();
@@ -443,12 +519,14 @@
     if (nextStartMins > 1380) nextStartMins = 1380;
 
     plannerData[day].blocks.push({ startMinutes: nextStartMins, completed: false });
+    saveData();
     renderDays();
     updateCalculations();
   }
 
   function toggleLock(day) {
     plannerData[day].locked = !plannerData[day].locked;
+    saveData();
     renderDays();
   }
 
@@ -463,6 +541,7 @@
     } else {
       plannerData[day].blocks.splice(index, 1);
     }
+    saveData();
     renderDays();
     updateCalculations();
   }
@@ -485,12 +564,12 @@
     const track = document.getElementById(`track-${day}`);
     const rect = track.getBoundingClientRect();
     
-    // Exact left edge of block = Mouse X - Track Left - Grab Offset
     const cursorXOnTrack = ev.clientX - rect.left;
     const actualLeftEdgeX = cursorXOnTrack - grabOffsetX;
     const snappedMins = calculateLeftEdgeMinutes(actualLeftEdgeX);
 
     plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false });
+    saveData();
     renderDays();
     updateCalculations();
   }
@@ -500,13 +579,11 @@
     const sample = document.getElementById('sample-block');
     let ghostEl = null;
 
-    // Track grab offset when mouse drag starts
     sample.addEventListener('dragstart', (e) => {
       const rect = sample.getBoundingClientRect();
       grabOffsetX = e.clientX - rect.left;
     });
 
-    // Touch Support for Mobile / iPad
     sample.addEventListener('touchstart', (e) => {
       const touch = e.touches[0];
       const rect = sample.getBoundingClientRect();
@@ -540,12 +617,12 @@
             
             if (plannerData[day].locked) return;
             
-            // Calculate exact left edge position for touch drops
             const cursorXOnTrack = touch.clientX - rect.left;
             const actualLeftEdgeX = cursorXOnTrack - grabOffsetX;
             const snappedMins = calculateLeftEdgeMinutes(actualLeftEdgeX);
 
             plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false });
+            saveData();
             renderDays();
             updateCalculations();
           }
@@ -598,6 +675,7 @@
 
   function updateAllocation(index, val) {
     subjects[index].allocation = parseInt(val) || 0;
+    saveData();
     updateCalculations();
   }
 
