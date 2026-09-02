@@ -7,17 +7,15 @@
   <title>HKDSE Revision Planner Calculator</title>
   <style>
     :root {
-      --bg: #f4f6f8;
+      --bg: #f3f4f6;
       --card-bg: #ffffff;
       --primary: #2563eb;
-      --primary-light: #bfdbfe;
       --primary-dark: #1d4ed8;
       --text: #1f2937;
       --text-muted: #6b7280;
       --border: #e5e7eb;
-      --block-grey: #e5e7eb;
-      --block-grey-dark: #9ca3af;
-      --block-blue: #3b82f6;
+      --block-grey: #9ca3af;
+      --block-blue: #2563eb;
       --danger: #ef4444;
       --success: #10b981;
     }
@@ -28,254 +26,199 @@
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     body {
       background-color: var(--bg);
       color: var(--text);
-      padding: 12px;
+      padding: 10px;
       padding-bottom: 40px;
     }
 
     .container {
-      max-width: 600px;
+      max-width: 900px;
       margin: 0 auto;
     }
 
     h1 {
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       text-align: center;
-      margin-bottom: 12px;
-      color: #111827;
+      margin-bottom: 10px;
     }
 
     .card {
       background: var(--card-bg);
       border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
       border: 1px solid var(--border);
     }
 
-    /* Total Section */
     .total-banner {
       display: flex;
       justify-content: space-between;
       align-items: center;
       background: linear-gradient(135deg, #1e40af, #3b82f6);
       color: white;
-      padding: 14px 18px;
+      padding: 12px 16px;
       border-radius: 10px;
       margin-bottom: 12px;
     }
 
-    .total-banner .label {
-      font-size: 0.95rem;
-      font-weight: 500;
-    }
-
     .total-banner .value {
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       font-weight: 700;
     }
 
-    /* Daily Timelines */
-    .day-row {
+    /* Draggable Source Area */
+    .sample-block-area {
       display: flex;
-      flex-direction: column;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
+      align-items: center;
+      gap: 12px;
+      background: #eff6ff;
+      border: 2px dashed #93c5fd;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 14px;
     }
 
-    .day-row:last-child {
-      border-bottom: none;
+    .sample-block {
+      width: 70px;
+      height: 36px;
+      background: var(--block-grey);
+      color: white;
+      font-weight: 600;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      user-select: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+      touch-action: none;
+    }
+
+    /* Daily Rows */
+    .day-row {
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
     }
 
     .day-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
 
-    .day-name {
-      font-weight: 600;
-      width: 45px;
-    }
-
-    .day-count {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      flex: 1;
-      margin-left: 8px;
+    .day-title {
+      font-weight: 700;
+      font-size: 0.9rem;
     }
 
     .lock-btn {
-      background: none;
+      background: #f3f4f6;
       border: 1px solid var(--border);
       padding: 4px 8px;
       border-radius: 6px;
       font-size: 0.75rem;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
     }
 
     .lock-btn.locked {
-      background: #eff6ff;
-      border-color: #93c5fd;
+      background: #dbeafe;
       color: var(--primary-dark);
+      border-color: #93c5fd;
     }
 
-    .timeline-container {
-      display: flex;
-      gap: 6px;
+    /* Timeline Styling */
+    .timeline-wrapper {
       overflow-x: auto;
-      padding: 4px 0 8px 0;
-      min-height: 48px;
-      align-items: center;
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px;
     }
 
-    .block {
-      min-width: 38px;
-      height: 38px;
-      border-radius: 6px;
+    .timeline-track {
+      position: relative;
+      width: 1440px; /* 24 hours * 60px/hr */
+      height: 48px;
+      background-size: 30px 100%; /* 30-min grid lines */
+      background-image: linear-gradient(to right, #e5e7eb 1px, transparent 1px);
+    }
+
+    .time-labels {
+      position: relative;
+      width: 1440px;
+      height: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .time-label {
+      position: absolute;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      transform: translateX(-50%);
+    }
+
+    .placed-block {
+      position: absolute;
+      top: 4px;
+      height: 40px;
+      width: 60px; /* 1 Hour = 60px */
+      border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 600;
-      user-select: none;
-      flex-shrink: 0;
-      transition: all 0.2s ease;
-    }
-
-    .block.grey {
-      background-color: var(--block-grey);
-      color: #4b5563;
-      border: 1px dashed var(--block-grey-dark);
-    }
-
-    .block.blue {
-      background-color: var(--block-blue);
+      font-size: 0.7rem;
+      font-weight: 700;
       color: white;
-      border: 1px solid #2563eb;
-      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
-    }
-
-    .add-block-btn {
-      min-width: 38px;
-      height: 38px;
-      border-radius: 6px;
-      border: 2px dashed #d1d5db;
-      background: none;
-      color: #9ca3af;
-      font-size: 1.2rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       cursor: pointer;
-      flex-shrink: 0;
+      user-select: none;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
 
-    .add-block-btn:active {
-      background: #f3f4f6;
-    }
+    .placed-block.grey { background-color: var(--block-grey); }
+    .placed-block.blue { background-color: var(--block-blue); }
 
     /* Allocation Table */
-    .table-wrapper {
-      overflow-x: auto;
-    }
-
     table {
       width: 100%;
       border-collapse: collapse;
-      text-align: left;
       font-size: 0.85rem;
     }
 
     th, td {
-      padding: 8px 6px;
+      padding: 8px 4px;
       border-bottom: 1px solid var(--border);
+      text-align: center;
     }
 
-    th {
-      color: var(--text-muted);
-      font-weight: 600;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-    }
+    th { color: var(--text-muted); font-size: 0.75rem; }
 
     td input {
-      width: 50px;
-      padding: 6px;
+      width: 55px;
+      padding: 4px;
       border: 1px solid var(--border);
       border-radius: 4px;
       text-align: center;
-      font-size: 0.85rem;
     }
 
-    td input:focus {
-      outline: 2px solid var(--primary);
-      border-color: transparent;
-    }
-
-    .validation-status {
+    .status-box {
       margin-top: 10px;
-      padding: 8px 12px;
+      padding: 8px;
       border-radius: 6px;
       font-size: 0.8rem;
-      font-weight: 500;
+      font-weight: 600;
       display: none;
     }
-
-    .validation-status.error {
-      display: block;
-      background-color: #fef2f2;
-      color: var(--danger);
-      border: 1px solid #fecaca;
-    }
-
-    .validation-status.success {
-      display: block;
-      background-color: #ecfdf5;
-      color: var(--success);
-      border: 1px solid #a7f3d0;
-    }
-
-    .section-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      margin-bottom: 10px;
-      color: #374151;
-    }
-
-    .actions-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .btn {
-      flex: 1;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      background: var(--bg);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-      border: none;
-    }
+    .status-box.error { display: block; background: #fef2f2; color: var(--danger); }
+    .status-box.success { display: block; background: #ecfdf5; color: var(--success); }
   </style>
 </head>
 <body>
@@ -283,73 +226,66 @@
 <div class="container">
   <h1>HKDSE Revision Planner</h1>
 
-  <!-- Week Total Card -->
   <div class="card">
     <div class="total-banner">
-      <span class="label">Week Total Blocks:</span>
+      <span>Week Total Blocks (Hours):</span>
       <span class="value" id="week-total-display">0</span>
     </div>
 
-    <!-- Daily Timelines -->
+    <!-- Unlimited Drag Block Source -->
+    <div class="sample-block-area">
+      <div class="sample-block" id="sample-block" draggable="true">1 Block</div>
+      <span style="font-size: 0.75rem; color: var(--text-muted);">
+        <strong>Drag & Drop:</strong> Drag block onto any timeline slot (:00 or :30). Tap placed blocks to delete (unlocked) or complete (locked).
+      </span>
+    </div>
+
     <div id="days-container"></div>
   </div>
 
-  <!-- Subject Allocation Card -->
+  <!-- Subject Allocation Section -->
   <div class="card">
-    <div class="section-title">Subject Allocation Calculator</div>
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>Subject</th>
-            <th>Suggested</th>
-            <th>Allocation</th>
-            <th>Share</th>
-          </tr>
-        </thead>
-        <tbody id="allocation-tbody"></tbody>
-      </table>
-    </div>
-
-    <div id="validation-msg" class="validation-status"></div>
-
-    <div class="actions-row">
-      <button class="btn" onclick="addSubject()">+ Add Subject</button>
-      <button class="btn btn-primary" onclick="autoDistribute()">Auto Fill</button>
-    </div>
+    <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 8px;">Subject Allocation</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align: left;">Subject</th>
+          <th>Suggested</th>
+          <th>Allocated</th>
+          <th>Share</th>
+        </tr>
+      </thead>
+      <tbody id="allocation-tbody"></tbody>
+    </table>
+    <div id="validation-msg" class="status-box"></div>
   </div>
 </div>
 
 <script>
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   
-  // App State
-  let plannerData = {
-    Monday: { blocks: [], locked: false },
-    Tuesday: { blocks: [], locked: false },
-    Wednesday: { blocks: [], locked: false },
-    Thursday: { blocks: [], locked: false },
-    Friday: { blocks: [], locked: false },
-    Saturday: { blocks: [], locked: false },
-    Sunday: { blocks: [], locked: false }
-  };
-
+  // DSE Fixed Subjects with Recommended Weightings (Ref: Images 1-2)
   let subjects = [
-    { name: 'Chinese', allocation: 0 },
-    { name: 'English', allocation: 0 },
-    { name: 'Maths', allocation: 0 },
-    { name: 'Elective 1', allocation: 0 },
-    { name: 'Elective 2', allocation: 0 }
+    { name: 'Chinese', weight: 0.20, allocation: 0 },
+    { name: 'English', weight: 0.20, allocation: 0 },
+    { name: 'Mathematics', weight: 0.15, allocation: 0 },
+    { name: 'Geography', weight: 0.15, allocation: 0 },
+    { name: 'Biology', weight: 0.15, allocation: 0 },
+    { name: 'Economics', weight: 0.15, allocation: 0 }
   ];
 
-  // Initialize UI
+  let plannerData = {};
+  days.forEach(day => {
+    plannerData[day] = { blocks: [], locked: false };
+  });
+
   function init() {
     renderDays();
-    renderAllocationTable();
+    setupSampleBlockTouch();
     updateCalculations();
   }
 
-  // Render Daily Planning Section
+  // Render Daily Timelines (12 AM to 12 PM to 12 AM)
   function renderDays() {
     const container = document.getElementById('days-container');
     container.innerHTML = '';
@@ -359,70 +295,149 @@
       const row = document.createElement('div');
       row.className = 'day-row';
 
-      const totalBlocks = dayData.blocks.length;
-      const completedBlocks = dayData.blocks.filter(b => b.completed).length;
+      const totalCount = dayData.blocks.length;
+      const doneCount = dayData.blocks.filter(b => b.completed).length;
 
-      let blocksHTML = dayData.blocks.map((block, idx) => {
-        if (dayData.locked) {
-          return `<div class="block ${block.completed ? 'blue' : 'grey'}" onclick="toggleBlockCompletion('${day}', ${idx})">
-                    ${block.completed ? '✓' : idx + 1}
-                  </div>`;
-        } else {
-          return `<div class="block grey" onclick="removeBlock('${day}', ${idx})">
-                    ${idx + 1}
-                  </div>`;
-        }
+      // Render 24-hour time labels
+      let labelsHTML = '';
+      for (let h = 0; h <= 24; h += 2) {
+        let labelText = h === 0 || h === 24 ? '12AM' : h === 12 ? '12PM' : h > 12 ? `${h-12}PM` : `${h}AM`;
+        labelsHTML += `<div class="time-label" style="left: ${h * 60}px;">${labelText}</div>`;
+      }
+
+      // Render placed blocks
+      let blocksHTML = dayData.blocks.map((b, idx) => {
+        const leftPos = b.startMinutes * 1; // 1 min = 1px, 60px per hour
+        const timeStr = formatMinutes(b.startMinutes);
+        return `
+          <div class="placed-block ${dayData.locked ? (b.completed ? 'blue' : 'grey') : 'grey'}" 
+               style="left: ${leftPos}px;" 
+               onclick="handleBlockClick('${day}', ${idx})">
+            ${dayData.locked && b.completed ? '✓' : timeStr}
+          </div>`;
       }).join('');
-
-      const addBtnHTML = !dayData.locked ? `<button class="add-block-btn" onclick="addBlock('${day}')">+</button>` : '';
 
       row.innerHTML = `
         <div class="day-header">
-          <span class="day-name">${day.slice(0, 3)}</span>
-          <span class="day-count">${dayData.locked ? `${completedBlocks}/` : ''}${totalBlocks} Blocks</span>
+          <span class="day-title">${day}</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">
+            ${dayData.locked ? `Done: ${doneCount} / ` : ''}${totalCount} Blocks
+          </span>
           <button class="lock-btn ${dayData.locked ? 'locked' : ''}" onclick="toggleLock('${day}')">
-            ${dayData.locked ? '🔒 Locked' : '🔓 Plan'}
+            ${dayData.locked ? '🔒 Locked' : '🔓 Lock'}
           </button>
         </div>
-        <div class="timeline-container">
-          ${blocksHTML}
-          ${addBtnHTML}
+        <div class="timeline-wrapper" ondragover="allowDrop(event)" ondrop="handleDrop(event, '${day}')">
+          <div class="time-labels">${labelsHTML}</div>
+          <div class="timeline-track" id="track-${day}">
+            ${blocksHTML}
+          </div>
         </div>
       `;
       container.appendChild(row);
     });
   }
 
-  // Block Operations
-  function addBlock(day) {
-    if (!plannerData[day].locked) {
-      plannerData[day].blocks.push({ completed: false });
-      renderDays();
-      updateCalculations();
-    }
+  function formatMinutes(mins) {
+    let h = Math.floor(mins / 60);
+    let m = mins % 60;
+    let ampm = h >= 12 && h < 24 ? 'P' : 'A';
+    let displayH = h % 12 === 0 ? 12 : h % 12;
+    return `${displayH}:${m === 0 ? '00' : m}${ampm}`;
   }
 
-  function removeBlock(day, index) {
-    if (!plannerData[day].locked) {
-      plannerData[day].blocks.splice(index, 1);
-      renderDays();
-      updateCalculations();
-    }
-  }
-
-  function toggleBlockCompletion(day, index) {
-    if (plannerData[day].locked) {
-      plannerData[day].blocks[index].completed = !plannerData[day].blocks[index].completed;
-      renderDays();
-    }
-  }
-
+  // Lock / Unlock Toggle
   function toggleLock(day) {
     plannerData[day].locked = !plannerData[day].locked;
     renderDays();
   }
 
-  // Calculate & Update Values
+  // Block Interaction: Tap to Complete (Locked) or Remove (Unlocked)
+  function handleBlockClick(day, index) {
+    if (plannerData[day].locked) {
+      plannerData[day].blocks[index].completed = !plannerData[day].blocks[index].completed;
+    } else {
+      plannerData[day].blocks.splice(index, 1);
+    }
+    renderDays();
+    updateCalculations();
+  }
+
+  // HTML5 Drag & Drop Logic
+  function allowDrop(ev) { ev.preventDefault(); }
+
+  function handleDrop(ev, day) {
+    ev.preventDefault();
+    if (plannerData[day].locked) return;
+
+    const track = document.getElementById(`track-${day}`);
+    const rect = track.getBoundingClientRect();
+    const dropX = ev.clientX - rect.left;
+
+    // Snap to nearest 30 mins (30px = 30 mins)
+    let snappedMins = Math.floor(dropX / 30) * 30;
+    if (snappedMins < 0) snappedMins = 0;
+    if (snappedMins > 1380) snappedMins = 1380; // Max start 11:00 PM
+
+    plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false });
+    renderDays();
+    updateCalculations();
+  }
+
+  // Touch Support for iPad / Mobile Drag-and-Drop
+  function setupSampleBlockTouch() {
+    const sample = document.getElementById('sample-block');
+    let ghostEl = null;
+
+    sample.addEventListener('touchstart', (e) => {
+      const touch = e.touches[0];
+      ghostEl = sample.cloneNode(true);
+      ghostEl.style.position = 'fixed';
+      ghostEl.style.opacity = '0.8';
+      ghostEl.style.pointerEvents = 'none';
+      ghostEl.style.zIndex = '1000';
+      document.body.appendChild(ghostEl);
+      moveGhost(touch);
+    });
+
+    sample.addEventListener('touchmove', (e) => {
+      if (ghostEl) moveGhost(e.touches[0]);
+    });
+
+    sample.addEventListener('touchend', (e) => {
+      if (!ghostEl) return;
+      const touch = e.changedTouches[0];
+      ghostEl.remove();
+      ghostEl = null;
+
+      days.forEach(day => {
+        const track = document.getElementById(`track-${day}`);
+        if (track) {
+          const rect = track.getBoundingClientRect();
+          if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+              touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+            
+            if (plannerData[day].locked) return;
+            const dropX = touch.clientX - rect.left;
+            let snappedMins = Math.floor(dropX / 30) * 30;
+            if (snappedMins < 0) snappedMins = 0;
+            if (snappedMins > 1380) snappedMins = 1380;
+
+            plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false });
+            renderDays();
+            updateCalculations();
+          }
+        }
+      });
+    });
+
+    function moveGhost(touch) {
+      ghostEl.style.left = `${touch.clientX - 35}px`;
+      ghostEl.style.top = `${touch.clientY - 18}px`;
+    }
+  }
+
+  // Calculations & Subject Suggestions
   function getWeekTotal() {
     return Object.values(plannerData).reduce((acc, curr) => acc + curr.blocks.length, 0);
   }
@@ -431,84 +446,55 @@
     const weekTotal = getWeekTotal();
     document.getElementById('week-total-display').innerText = weekTotal;
 
-    renderAllocationTable();
-    validateAllocation();
-  }
+    // Calculate Suggested Blocks to sum EXACTLY to Week Total
+    let remaining = weekTotal;
+    const suggestions = subjects.map((subj, idx) => {
+      if (idx === subjects.length - 1) return remaining; // Final subject takes remainder
+      let val = Math.round(weekTotal * subj.weight);
+      remaining -= val;
+      return val;
+    });
 
-  // Allocation Table Rendering
-  function renderAllocationTable() {
+    // Render Table
     const tbody = document.getElementById('allocation-tbody');
-    const weekTotal = getWeekTotal();
     tbody.innerHTML = '';
 
-    subjects.forEach((subj, idx) => {
-      const suggested = weekTotal > 0 ? Math.round(weekTotal / subjects.length) : 0;
-      const totalAllocated = subjects.reduce((sum, s) => sum + (parseInt(s.allocation) || 0), 0);
-      const share = totalAllocated > 0 ? ((subj.allocation / totalAllocated) * 100).toFixed(1) : 0;
+    const totalAllocated = subjects.reduce((sum, s) => sum + (parseInt(s.allocation) || 0), 0);
 
+    subjects.forEach((subj, idx) => {
+      const share = totalAllocated > 0 ? ((subj.allocation / totalAllocated) * 100).toFixed(1) : '0.0';
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><input type="text" value="${subj.name}" onchange="updateSubjectName(${idx}, this.value)" style="width: 85px; text-align: left;"></td>
-        <td>~${suggested}</td>
+        <td style="text-align: left; font-weight: 600;">${subj.name}</td>
+        <td>${suggestions[idx]}</td>
         <td><input type="number" min="0" value="${subj.allocation}" onchange="updateAllocation(${idx}, this.value)"></td>
         <td>${share}%</td>
       `;
       tbody.appendChild(tr);
     });
 
-    validateAllocation();
+    validateAllocation(totalAllocated, weekTotal);
   }
 
-  function updateSubjectName(index, value) {
-    subjects[index].name = value;
+  function updateAllocation(index, val) {
+    subjects[index].allocation = parseInt(val) || 0;
+    updateCalculations();
   }
 
-  function updateAllocation(index, value) {
-    subjects[index].allocation = parseInt(value) || 0;
-    renderAllocationTable();
-  }
+  function validateAllocation(allocated, total) {
+    const msg = document.getElementById('validation-msg');
+    if (total === 0) { msg.style.display = 'none'; return; }
 
-  function addSubject() {
-    subjects.push({ name: `Subject ${subjects.length + 1}`, allocation: 0 });
-    renderAllocationTable();
-  }
-
-  function autoDistribute() {
-    const weekTotal = getWeekTotal();
-    if (weekTotal === 0 || subjects.length === 0) return;
-
-    const baseAllocation = Math.floor(weekTotal / subjects.length);
-    let remainder = weekTotal % subjects.length;
-
-    subjects.forEach((subj, i) => {
-      subj.allocation = baseAllocation + (i < remainder ? 1 : 0);
-    });
-
-    renderAllocationTable();
-  }
-
-  function validateAllocation() {
-    const weekTotal = getWeekTotal();
-    const allocatedSum = subjects.reduce((sum, s) => sum + (parseInt(s.allocation) || 0), 0);
-    const msgDiv = document.getElementById('validation-msg');
-
-    if (weekTotal === 0) {
-      msgDiv.style.display = 'none';
-      return;
-    }
-
-    if (allocatedSum === weekTotal) {
-      msgDiv.className = 'validation-status success';
-      msgDiv.innerText = ` Perfect! Allocated ${allocatedSum} / ${weekTotal} blocks.`;
+    if (allocated === total) {
+      msg.className = 'status-box success';
+      msg.innerText = `✓ Perfect! Total allocated blocks (${allocated}) equals Week Total (${total}).`;
     } else {
-      msgDiv.className = 'validation-status error';
-      msgDiv.innerText = ` Mismatch: Allocated ${allocatedSum} blocks, but total is ${weekTotal}.`;
+      msg.className = 'status-box error';
+      msg.innerText = `⚠ Mismatch: Allocated ${allocated} blocks, but Week Total is ${total}. Adjust input values.`;
     }
   }
 
   window.onload = init;
 </script>
-
 </body>
 </html>
-
