@@ -38,7 +38,6 @@
       padding-bottom: 40px;
     }
 
-    /* Sticky Drop Bar with Instructions */
     .sticky-drop-bar {
       position: sticky;
       top: 10px;
@@ -175,7 +174,7 @@
     <div class="sample-block" id="sticky-sample-block" draggable="true">1 Block</div>
     <div style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.35;">
       • <strong>Delete:</strong> Double click any placed block on the timeline to delete it.<br>
-      • <strong>0.8s Continuous Duplication:</strong> Long press a placed block for 0.8 seconds to duplicate automatically to the next session.<br>
+      • <strong>0.8s Single Duplication:</strong> Long press a placed block for 0.8 seconds to duplicate exactly once to the next session.<br>
       • <strong>Move Across Days:</strong> Click/touch & hold a block to drag it flexibly anywhere across timeline tracks and days.
     </div>
   </div>
@@ -251,9 +250,8 @@
   let activeBlockContext = null;
   let draggedBlock = null;
 
-  // Timers for 0.8s Continuous Duplication & Click handling
+  // Timers for 0.8s Single Duplication & Double Click Deletion
   let dupTimer = null;
-  let dupInterval = null;
   let clickTimer = null;
   let clickCount = 0;
 
@@ -386,7 +384,7 @@
     return `${displayH}:${m === 0 ? '00' : m}${ampm}`;
   }
 
-  /* Core Movement & 0.8s Continuous Duplication Engine */
+  /* Core Movement & 0.8s Single Duplication Engine */
   function handleBlockPressStart(e, day, idx) {
     e.preventDefault();
     e.stopPropagation();
@@ -414,32 +412,25 @@
     grabOffsetX = clientX - rect.left;
 
     let isMoved = false;
-    let isDuplicating = false;
+    let isDuplicated = false;
 
-    // Start 0.8-second timer for continuous duplication
+    // Start 0.8-second timer for SINGLE duplication (+1 hour next session)
     dupTimer = setTimeout(() => {
-      isDuplicating = true;
+      isDuplicated = true;
       let baseBlock = plannerData[day].blocks[idx];
       if (!baseBlock) return;
 
-      let lastMins = baseBlock.startMinutes;
-      
-      dupInterval = setInterval(() => {
-        let newMins = lastMins + 60; // Next session (+1 hour)
-        if (newMins <= 1380) {
-          plannerData[day].blocks.push({
-            startMinutes: newMins,
-            completed: false,
-            assignedSubject: null
-          });
-          lastMins = newMins;
-          saveData();
-          renderDays();
-          updateCalculations();
-        } else {
-          clearDupTimers();
-        }
-      }, 200);
+      let nextMins = baseBlock.startMinutes + 60; // Next session (+1 hour)
+      if (nextMins <= 1380) {
+        plannerData[day].blocks.push({
+          startMinutes: nextMins,
+          completed: false,
+          assignedSubject: null
+        });
+        saveData();
+        renderDays();
+        updateCalculations();
+      }
     }, 800);
 
     function onPointerMove(moveEvent) {
@@ -447,9 +438,9 @@
       const curY = moveEvent.touches ? moveEvent.touches[0].clientY : moveEvent.clientY;
 
       if (Math.abs(curX - clientX) > 5 || Math.abs(curY - clientY) > 5) {
-        if (!isMoved && !isDuplicating) {
+        if (!isMoved && !isDuplicated) {
           isMoved = true;
-          clearDupTimers();
+          clearDupTimer();
 
           // Pick up block to move across days
           draggedBlock = plannerData[day].blocks[idx];
@@ -476,7 +467,7 @@
       window.removeEventListener('touchmove', onPointerMove);
       window.removeEventListener('touchend', onPointerUp);
 
-      clearDupTimers();
+      clearDupTimer();
 
       if (ghostBlock) {
         ghostBlock.remove();
@@ -519,8 +510,8 @@
         return;
       }
 
-      // Handle Single Click and Double Click (Delete) logic
-      if (!isMoved && !isDuplicating) {
+      // Handle Double Click (Delete) logic
+      if (!isMoved && !isDuplicated) {
         clickCount++;
         if (clickCount === 1) {
           clickTimer = setTimeout(() => {
@@ -529,7 +520,7 @@
         } else if (clickCount === 2) {
           clearTimeout(clickTimer);
           clickCount = 0;
-          // Requirement 2: Double Click Deletes the block
+          // Double Click Deletes the block
           plannerData[day].blocks.splice(idx, 1);
           saveData();
           renderDays();
@@ -544,9 +535,8 @@
     window.addEventListener('touchend', onPointerUp);
   }
 
-  function clearDupTimers() {
+  function clearDupTimer() {
     if (dupTimer) { clearTimeout(dupTimer); dupTimer = null; }
-    if (dupInterval) { clearInterval(dupInterval); clearTimeout(dupInterval); dupInterval = null; }
   }
 
   function toggleLock(day) {
@@ -784,5 +774,6 @@
 </script>
 </body>
 </html>
+
 
 
