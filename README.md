@@ -282,14 +282,6 @@
 </div>
 
 <div class="container" id="main-app" style="display: none;">
-  <!-- Sticky Top Drop Zone -->
-  <div class="sticky-drop-bar">
-    <div class="sample-block" id="sticky-sample-block" draggable="true">1 Block</div>
-    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
-      <strong>Quick Drop:</strong> Drag this block directly down to any timeline without scrolling up!
-    </span>
-  </div>
-
   <div class="user-bar">
     <span>User: <strong id="current-user-display">Guest</strong></span>
     <button class="logout-btn" onclick="logout()">Logout / Switch User</button>
@@ -300,6 +292,14 @@
   <!-- Encourage Tip Banner for Non-Writer users -->
   <div class="tip-banner" id="tip-banner" style="display: none;">
     💡 <strong>Revision Tip:</strong> 1 block = 50 min revision + 10 min break
+  </div>
+
+  <!-- Sticky Top Drop Zone (Positioned directly below the explanation line) -->
+  <div class="sticky-drop-bar">
+    <div class="sample-block" id="sticky-sample-block" draggable="true">1 Block</div>
+    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
+      <strong>Quick Drop:</strong> Drag this block directly down to any timeline without scrolling up!
+    </span>
   </div>
 
   <div class="card">
@@ -365,8 +365,9 @@
     { name: 'Extra Learning', weight: 0, allocation: 0, type: 'extra', color: '#64748b' }
   ];
 
+  // Removed Chinese, English, Maths for non-Writer preset allocation
   const defaultUserSubjects = [
-    'Chinese', 'English', 'Mathematics', 'Elective 1', 'Elective 2', 'Elective 3'
+    'Subject 1', 'Subject 2', 'Subject 3', 'Elective 1', 'Elective 2', 'Elective 3'
   ];
 
   let currentAuthMode = 'login';
@@ -380,7 +381,7 @@
   let grabOffsetX = 0;
 
   let activeBlockContext = null;
-  let draggedBlock = null; // Store for relocating existing blocks
+  let draggedBlock = null;
 
   function initApp() {
     loadAccountsDB();
@@ -633,7 +634,6 @@
     return `${displayH}:${m === 0 ? '00' : m}${ampm}`;
   }
 
-  // --- 0.2s Hold & Relocate Logic ---
   let holdTimer = null;
   let isHoldPickedUp = false;
 
@@ -643,12 +643,11 @@
 
     holdTimer = setTimeout(() => {
       isHoldPickedUp = true;
-      // Pick up block to relocate
       draggedBlock = plannerData[day].blocks[index];
       plannerData[day].blocks.splice(index, 1);
       saveData();
       renderDays();
-    }, 200); // 0.2s hold duration
+    }, 200);
   }
 
   function cancelHoldAndDrag() {
@@ -823,7 +822,6 @@
     }
   }
 
-  // --- Dynamic Subject Name Updating ---
   function updateSubjectName(index, newName) {
     const oldName = items[index].name;
     const trimmed = newName.trim();
@@ -831,7 +829,6 @@
 
     items[index].name = trimmed;
 
-    // Update completed block labels
     Object.values(plannerData).forEach(day => {
       day.blocks.forEach(b => {
         if (b.assignedSubject === oldName) b.assignedSubject = trimmed;
