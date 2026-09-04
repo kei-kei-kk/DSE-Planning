@@ -154,13 +154,13 @@
     }
 
     .total-banner {
-      display: flex; justify-content: space-between; align-items: center;
+      display: flex; justify-content: center; align-items: center;
       background: linear-gradient(135deg, #2563eb, #3b82f6); color: white;
       padding: 14px 18px; border-radius: 10px; margin-bottom: 14px;
       box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
     }
 
-    .total-banner .value { font-size: 1.4rem; font-weight: 700; text-align: right; }
+    .total-banner .value-group { font-size: 1.2rem; font-weight: 700; text-align: center; }
 
     .sample-block {
       width: 75px; height: 38px; background: var(--block-grey);
@@ -236,6 +236,31 @@
     .subject-tag { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
     .special-row { background-color: #f8fafc; }
 
+    .add-subject-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px;
+      background: #f1f5f9;
+      border: 1px dashed var(--primary);
+      color: var(--primary-dark);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .add-subject-btn:hover {
+      background: #e2e8f0;
+    }
+
+    .suggestion-note {
+      margin-top: 10px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-style: italic;
+    }
+
     .status-box { margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; display: none; }
     .status-box.error { display: block; background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
     .status-box.success { display: block; background: #ecfdf5; color: var(--success); border: 1px solid #a7f3d0; }
@@ -262,7 +287,6 @@
 </head>
 <body>
 
-<!-- Login / Register Overlay -->
 <div class="auth-overlay" id="auth-overlay">
   <div class="auth-card">
     <h2>Revision Planner Login</h2>
@@ -289,12 +313,10 @@
 
   <h1>HKDSE Revision Planner</h1>
 
-  <!-- Encourage Tip Banner for Non-Writer users -->
   <div class="tip-banner" id="tip-banner" style="display: none;">
     💡 <strong>Revision Tip:</strong> 1 block = 50 min revision + 10 min break
   </div>
 
-  <!-- Sticky Top Drop Zone (Positioned directly below the tip banner) -->
   <div class="sticky-drop-bar">
     <div class="sample-block" id="sticky-sample-block" draggable="true">1 Block</div>
     <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
@@ -304,14 +326,14 @@
 
   <div class="card">
     <div class="total-banner">
-      <div>Week Planned: <span class="value" id="week-total-display">0</span></div>
-      <div>Week Finished: <span class="value" id="week-finished-display">0</span></div>
+      <div class="value-group">
+        Total Week Blocks: <span id="week-finished-display">0</span> / <span id="week-total-display">0</span>
+      </div>
     </div>
 
     <div id="days-container"></div>
   </div>
 
-  <!-- Subject Allocation Section -->
   <div class="card">
     <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; color: #334155;">Time Allocation</div>
     <table>
@@ -326,6 +348,12 @@
       </thead>
       <tbody id="allocation-tbody"></tbody>
     </table>
+    
+    <div id="non-writer-extras" style="display: none;">
+      <button class="add-subject-btn" onclick="addNewSubject()">+ Add New Subject</button>
+      <div class="suggestion-note">Tip: Buffer time or extra study columns can be added as custom subjects if needed.</div>
+    </div>
+
     <div id="validation-msg" class="status-box"></div>
   </div>
 
@@ -336,7 +364,6 @@
   </div>
 </div>
 
-<!-- Modal for selecting subject when completing block -->
 <div id="subject-dialog-overlay" class="subject-dialog-overlay" style="display: none;">
   <div class="subject-dialog">
     <h3>Select Subject</h3>
@@ -365,9 +392,8 @@
     { name: 'Extra Learning', weight: 0, allocation: 0, type: 'extra', color: '#64748b' }
   ];
 
-  const defaultUserSubjects = [
-    'Subject 1', 'Subject 2', 'Subject 3', 'Elective 1', 'Elective 2', 'Elective 3'
-  ];
+  // Non-Writer defaults: 3 subjects only
+  const defaultUserSubjects = ['Subject 1', 'Subject 2', 'Subject 3'];
 
   let currentAuthMode = 'login';
   let currentUser = null; 
@@ -382,9 +408,15 @@
   let activeBlockContext = null;
   let draggedBlock = null;
 
+  // Timers for 0.2s redrop & 0.8s continuous duplicate
+  let holdTimer = null;
+  let dupInterval = null;
+  let isHoldPickedUp = false;
+
   function initApp() {
     loadAccountsDB();
     setupSampleBlockEvents();
+    checkExistingSession();
   }
 
   function loadAccountsDB() {
@@ -394,6 +426,18 @@
 
   function saveAccountsDB() {
     localStorage.setItem('hkdse_accounts_db', JSON.stringify(accountsDB));
+  }
+
+  // Restore session upon page refresh without forcing re-login
+  function checkExistingSession() {
+    const activeSession = localStorage.getItem('hkdse_active_session');
+    if (activeSession) {
+      if (activeSession === 'Guest') {
+        loginAsGuest();
+      } else if (accountsDB[activeSession] || activeSession === 'Writer') {
+        loginUser(activeSession);
+      }
+    }
   }
 
   function switchAuthTab(mode) {
@@ -458,7 +502,8 @@
   function loginAsGuest() {
     isGuest = true;
     currentUser = null;
-    document.getElementById('current-user-display').innerText = 'Guest (Unsaved Session)';
+    localStorage.setItem('hkdse_active_session', 'Guest');
+    document.getElementById('current-user-display').innerText = 'Guest (Session Saved)';
     
     const guestData = localStorage.getItem('hkdse_guest_planner');
     const guestItems = localStorage.getItem('hkdse_guest_items');
@@ -472,14 +517,16 @@
   function loginUser(username) {
     isGuest = false;
     currentUser = username;
+    localStorage.setItem('hkdse_active_session', username);
     document.getElementById('current-user-display').innerText = username;
 
     if (username === 'Writer' && !accountsDB['Writer']) {
       accountsDB['Writer'] = { password: 'Charlie1992929', plannerData: createEmptyPlannerData(), items: JSON.parse(JSON.stringify(defaultWriterItems)) };
+      saveAccountsDB();
     }
 
-    plannerData = accountsDB[username].plannerData || createEmptyPlannerData();
-    items = accountsDB[username].items || (username === 'Writer' ? JSON.parse(JSON.stringify(defaultWriterItems)) : createDefaultUserItems());
+    plannerData = accountsDB[username] ? accountsDB[username].plannerData || createEmptyPlannerData() : createEmptyPlannerData();
+    items = accountsDB[username] ? accountsDB[username].items || (username === 'Writer' ? JSON.parse(JSON.stringify(defaultWriterItems)) : createDefaultUserItems()) : createDefaultUserItems();
 
     startSession();
   }
@@ -488,14 +535,17 @@
     document.getElementById('auth-overlay').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
     
-    const tipBanner = document.getElementById('tip-banner');
-    tipBanner.style.display = (currentUser === 'Writer') ? 'none' : 'block';
+    const isWriter = (currentUser === 'Writer');
+    
+    document.getElementById('tip-banner').style.display = isWriter ? 'none' : 'block';
+    document.getElementById('non-writer-extras').style.display = isWriter ? 'none' : 'block';
 
     renderDays();
     updateCalculations();
   }
 
   function logout() {
+    localStorage.removeItem('hkdse_active_session');
     document.getElementById('main-app').style.display = 'none';
     document.getElementById('auth-overlay').style.display = 'flex';
     document.getElementById('auth-username').value = '';
@@ -513,9 +563,20 @@
     let userItems = defaultUserSubjects.map((name, idx) => ({
       name: name, weight: 0, allocation: '', type: 'subject', color: macaronColors[idx % macaronColors.length]
     }));
-    userItems.push({ name: 'Buffer Time', weight: 0, allocation: '', type: 'buffer', color: '#94a3b8' });
-    userItems.push({ name: 'Extra Learning', weight: 0, allocation: '', type: 'extra', color: '#64748b' });
     return userItems;
+  }
+
+  function addNewSubject() {
+    const nextIdx = items.length + 1;
+    items.push({
+      name: `Subject ${nextIdx}`,
+      weight: 0,
+      allocation: '',
+      type: 'subject',
+      color: macaronColors[(items.length) % macaronColors.length]
+    });
+    saveData();
+    updateCalculations();
   }
 
   function saveData() {
@@ -632,9 +693,6 @@
     return `${displayH}:${m === 0 ? '00' : m}${ampm}`;
   }
 
-  let holdTimer = null;
-  let isHoldPickedUp = false;
-
   function startHoldAndDrag(e, day, index) {
     if (plannerData[day].locked) return;
     isHoldPickedUp = false;
@@ -646,12 +704,43 @@
       saveData();
       renderDays();
     }, 200);
+
+    dupInterval = setTimeout(() => {
+      cancelHoldAndDrag();
+      
+      let baseBlock = plannerData[day].blocks[index];
+      if (!baseBlock) return;
+
+      let lastMins = baseBlock.startMinutes;
+      
+      dupInterval = setInterval(() => {
+        let newMins = lastMins + 60;
+        if (newMins <= 1380) {
+          plannerData[day].blocks.push({
+            startMinutes: newMins,
+            completed: false,
+            assignedSubject: null
+          });
+          lastMins = newMins;
+          saveData();
+          renderDays();
+          updateCalculations();
+        } else {
+          clearInterval(dupInterval);
+        }
+      }, 200);
+    }, 800);
   }
 
   function cancelHoldAndDrag() {
     if (holdTimer) {
       clearTimeout(holdTimer);
       holdTimer = null;
+    }
+    if (dupInterval) {
+      clearInterval(dupInterval);
+      clearTimeout(dupInterval);
+      dupInterval = null;
     }
   }
 
@@ -890,9 +979,8 @@
       });
     } else {
       const subjectsOnly = items.filter(i => i.type === 'subject');
-      const academicTotal = Math.max(weekTotal - bufferSuggested - extraSuggested, 0);
-      const evenBase = subjectsOnly.length > 0 ? Math.floor(academicTotal / subjectsOnly.length) : 0;
-      let remainder = subjectsOnly.length > 0 ? academicTotal % subjectsOnly.length : 0;
+      const evenBase = subjectsOnly.length > 0 ? Math.floor(weekTotal / subjectsOnly.length) : 0;
+      let remainder = subjectsOnly.length > 0 ? weekTotal % subjectsOnly.length : 0;
 
       suggestions = items.map((item) => {
         if (item.type === 'buffer') return bufferSuggested;
