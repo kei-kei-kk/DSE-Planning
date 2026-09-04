@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -5,7 +6,6 @@
   <title>HKDSE Revision Planner Calculator</title>
   <style>
     :root {
-      /* Calming Study-Focused Blue Palette */
       --bg: #f0f4f8;
       --card-bg: #ffffff;
       --primary: #3b82f6;
@@ -15,9 +15,7 @@
       --text-muted: #64748b;
       --border: #cbd5e1;
       
-      /* Block Colors - Soft/Gentle Tones */
-      --block-grey: #94a3b8;      /* Soft Slate Grey (Planned) */
-      --block-green: #34d399;     /* Gentle Sage/Emerald Green (Completed) */
+      --block-grey: #94a3b8;
       --danger: #ef4444;
       --danger-soft: #fef2f2;
       --danger-border: #fecaca;
@@ -43,9 +41,127 @@
       padding-bottom: 40px;
     }
 
+    /* Authentication Overlay / Modal */
+    .auth-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .auth-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 24px;
+      width: 90%;
+      max-width: 380px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .auth-card h2 {
+      font-size: 1.3rem;
+      margin-bottom: 12px;
+      color: #0f172a;
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 8px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .auth-tab.active {
+      background: white;
+      color: var(--primary-dark);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .auth-input {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .auth-btn {
+      width: 100%;
+      padding: 10px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .auth-btn:hover { background: var(--primary-dark); }
+
+    .guest-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-top: 14px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .auth-error {
+      color: var(--danger);
+      font-size: 0.75rem;
+      margin-bottom: 10px;
+      display: none;
+    }
+
     .container {
       max-width: 900px;
       margin: 0 auto;
+    }
+
+    /* User Header Bar */
+    .user-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.7);
+      padding: 8px 14px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .logout-btn {
+      background: #e2e8f0;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      color: var(--text-muted);
     }
 
     h1 {
@@ -78,8 +194,9 @@
     }
 
     .total-banner .value {
-      font-size: 1.6rem;
+      font-size: 1.4rem;
       font-weight: 700;
+      text-align: right;
     }
 
     /* Draggable Sample Block Area */
@@ -168,7 +285,7 @@
       position: relative;
       width: 1440px; /* 24 hrs * 60px/hr */
       height: 48px;
-      background-size: 30px 100%; /* Grid lines every 30 mins */
+      background-size: 30px 100%;
       background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px);
     }
 
@@ -191,39 +308,32 @@
       position: absolute;
       top: 4px;
       height: 40px;
-      width: 60px; /* 1 Hour = 60px */
+      width: 60px;
       border-radius: 6px;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       font-weight: 700;
       color: white;
       cursor: pointer;
       user-select: none;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       transition: background-color 0.2s ease, transform 0.15s ease;
+      padding: 2px;
+      text-align: center;
+      line-height: 1.1;
     }
 
-    .placed-block:active {
-      transform: scale(0.96);
-    }
-
-    .placed-block.grey { 
-      background-color: var(--block-grey); 
-    }
-    
-    .placed-block.green { 
-      background-color: var(--block-green); 
-      color: #064e3b;
-      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
-    }
+    .placed-block:active { transform: scale(0.96); }
+    .placed-block.grey { background-color: var(--block-grey); }
 
     /* Allocation Table */
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.85rem;
+      font-size: 0.825rem;
     }
 
     th, td {
@@ -239,8 +349,8 @@
     }
 
     td input {
-      width: 55px;
-      padding: 6px;
+      width: 50px;
+      padding: 6px 2px;
       border: 1px solid var(--border);
       border-radius: 6px;
       text-align: center;
@@ -253,9 +363,15 @@
       border-color: transparent;
     }
 
-    .special-row {
-      background-color: #f8fafc;
+    .subject-tag {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
     }
+
+    .special-row { background-color: #f8fafc; }
 
     .status-box {
       margin-top: 12px;
@@ -291,31 +407,87 @@
       gap: 6px;
     }
 
-    .reset-btn:hover {
-      background-color: var(--danger-hover);
+    .reset-btn:hover { background-color: var(--danger-hover); }
+    .reset-btn:active { transform: scale(0.98); }
+
+    /* Subject Selector Dialog */
+    .subject-dialog-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
     }
 
-    .reset-btn:active {
-      transform: scale(0.98);
+    .subject-dialog {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      width: 280px;
+      text-align: center;
+    }
+
+    .subject-dialog h3 {
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+
+    .subject-option-btn {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 8px;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.85rem;
     }
   </style>
 </head>
 <body>
 
-<div class="container">
+<!-- Login / Register Overlay -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-card">
+    <h2>Revision Planner Login</h2>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Login</button>
+      <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Create Account</button>
+    </div>
+    
+    <div id="auth-error" class="auth-error"></div>
+    
+    <input type="text" id="auth-username" class="auth-input" placeholder="Username (3-20 chars)" maxlength="20">
+    <input type="password" id="auth-password" class="auth-input" placeholder="Password (3-20 chars)" maxlength="20">
+    
+    <button class="auth-btn" id="auth-submit-btn" onclick="handleAuthSubmit()">Login</button>
+    
+    <button class="guest-btn" onclick="loginAsGuest()">Continue as Guest (Session Only)</button>
+  </div>
+</div>
+
+<div class="container" id="main-app" style="display: none;">
+  <div class="user-bar">
+    <span>User: <strong id="current-user-display">Guest</strong></span>
+    <button class="logout-btn" onclick="logout()">Logout / Switch User</button>
+  </div>
+
   <h1>HKDSE Revision Planner</h1>
 
   <div class="card">
     <div class="total-banner">
-      <span>Week Total Blocks (Hours):</span>
-      <span class="value" id="week-total-display">0</span>
+      <div>Week Planned: <span class="value" id="week-total-display">0</span></div>
+      <div>Week Finished: <span class="value" id="week-finished-display">0</span></div>
     </div>
 
     <!-- Unlimited Sample Block Source -->
     <div class="sample-block-area">
       <div class="sample-block" id="sample-block" draggable="true">1 Block</div>
       <span style="font-size: 0.75rem; color: var(--text-muted);">
-        <strong>Placement:</strong> Block snaps accurately based on its left edge. Tap to remove/complete. <strong>Long press (0.8s)</strong> to duplicate!
+        <strong>Placement:</strong> Drag/drop or snap block to grid. Tap locked block to complete. <strong>Long press (0.8s)</strong> to duplicate!
       </span>
     </div>
 
@@ -331,6 +503,7 @@
           <th style="text-align: left;">Category</th>
           <th>Suggested</th>
           <th>Allocated</th>
+          <th>Finished</th>
           <th>Share</th>
         </tr>
       </thead>
@@ -347,90 +520,253 @@
   </div>
 </div>
 
+<!-- Modal for selecting subject when completing block -->
+<div id="subject-dialog-overlay" class="subject-dialog-overlay" style="display: none;">
+  <div class="subject-dialog">
+    <h3>Select Subject</h3>
+    <div id="subject-options-container"></div>
+    <button onclick="closeSubjectDialog()" style="margin-top: 6px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.8rem;">Cancel</button>
+  </div>
+</div>
+
 <script>
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   
-  const defaultItems = [
-    { name: 'Chinese', weight: 0.20, allocation: 0, type: 'subject' },
-    { name: 'English', weight: 0.20, allocation: 0, type: 'subject' },
-    { name: 'Mathematics', weight: 0.15, allocation: 0, type: 'subject' },
-    { name: 'Geography', weight: 0.15, allocation: 0, type: 'subject' },
-    { name: 'Biology', weight: 0.15, allocation: 0, type: 'subject' },
-    { name: 'Economics', weight: 0.15, allocation: 0, type: 'subject' },
-    { name: 'Buffer Time', weight: 0, allocation: 0, type: 'buffer' },
-    { name: 'Extra Learning', weight: 0, allocation: 0, type: 'extra' }
+  // Macaron / Soft Aesthetic Palette for Subjects
+  const macaronColors = [
+    '#70a1ff', '#ff7875', '#ffc069', '#5cdbd3', 
+    '#b37feb', '#ff9c6e', '#95de64', '#ffd666',
+    '#ff85c0', '#36cfc9'
   ];
 
+  const defaultWriterItems = [
+    { name: 'Chinese', weight: 0.20, allocation: 0, type: 'subject', color: macaronColors[0] },
+    { name: 'English', weight: 0.20, allocation: 0, type: 'subject', color: macaronColors[1] },
+    { name: 'Mathematics', weight: 0.15, allocation: 0, type: 'subject', color: macaronColors[2] },
+    { name: 'Geography', weight: 0.15, allocation: 0, type: 'subject', color: macaronColors[3] },
+    { name: 'Biology', weight: 0.15, allocation: 0, type: 'subject', color: macaronColors[4] },
+    { name: 'Economics', weight: 0.15, allocation: 0, type: 'subject', color: macaronColors[5] },
+    { name: 'Buffer Time', weight: 0, allocation: 0, type: 'buffer', color: '#94a3b8' },
+    { name: 'Extra Learning', weight: 0, allocation: 0, type: 'extra', color: '#64748b' }
+  ];
+
+  const defaultUserSubjects = [
+    'Chinese', 'English', 'Mathematics', 'Elective 1', 'Elective 2', 'Elective 3'
+  ];
+
+  let currentAuthMode = 'login';
+  let currentUser = null; // null represents guest
+  let isGuest = false;
+
+  let accountsDB = {}; // Local user store
   let items = [];
   let plannerData = {};
   let scrollPositions = {};
   let grabOffsetX = 0;
 
-  // Local Storage Logic
-  function loadSavedData() {
-    const savedPlanner = localStorage.getItem('hkdse_plannerData');
-    const savedItems = localStorage.getItem('hkdse_items');
+  let activeBlockContext = null; // Temporary store for completing block selection
 
-    if (savedPlanner) {
-      plannerData = JSON.parse(savedPlanner);
-    } else {
-      plannerData = {};
-      days.forEach(day => {
-        plannerData[day] = { blocks: [], locked: false };
-      });
-    }
+  // --- Account & Storage Management ---
+  function initApp() {
+    loadAccountsDB();
+    setupSampleBlockEvents();
+  }
 
-    if (savedItems) {
-      items = JSON.parse(savedItems);
+  function loadAccountsDB() {
+    const db = localStorage.getItem('hkdse_accounts_db');
+    if (db) {
+      accountsDB = JSON.parse(db);
     } else {
-      items = JSON.parse(JSON.stringify(defaultItems));
+      accountsDB = {};
     }
   }
 
+  function saveAccountsDB() {
+    localStorage.setItem('hkdse_accounts_db', JSON.stringify(accountsDB));
+  }
+
+  function switchAuthTab(mode) {
+    currentAuthMode = mode;
+    document.getElementById('tab-login').className = `auth-tab ${mode === 'login' ? 'active' : ''}`;
+    document.getElementById('tab-register').className = `auth-tab ${mode === 'register' ? 'active' : ''}`;
+    document.getElementById('auth-submit-btn').innerText = mode === 'login' ? 'Login' : 'Create Account';
+    hideAuthError();
+  }
+
+  function showAuthError(msg) {
+    const err = document.getElementById('auth-error');
+    err.innerText = msg;
+    err.style.display = 'block';
+  }
+
+  function hideAuthError() {
+    document.getElementById('auth-error').style.display = 'none';
+  }
+
+  function handleAuthSubmit() {
+    const uInput = document.getElementById('auth-username').value.trim();
+    const pInput = document.getElementById('auth-password').value.trim();
+
+    const usernameRegex = /^[a-zA-Z0-9]{3,20}$/;
+    if (!usernameRegex.test(uInput)) {
+      showAuthError('Username must be 3-20 alphanumeric characters.');
+      return;
+    }
+
+    if (pInput.length < 3 || pInput.length > 20) {
+      showAuthError('Password must be 3-20 characters.');
+      return;
+    }
+
+    // Special Reserved Account "Writer"
+    if (uInput.toLowerCase() === 'writer') {
+      if (uInput === 'Writer' && pInput === 'Charlie1992929') {
+        loginUser('Writer');
+        return;
+      } else {
+        showAuthError('Invalid credentials for reserved account.');
+        return;
+      }
+    }
+
+    if (currentAuthMode === 'register') {
+      if (accountsDB[uInput]) {
+        showAuthError('Username already exists. Please pick another.');
+        return;
+      }
+      // Register New Account
+      accountsDB[uInput] = {
+        password: pInput,
+        plannerData: createEmptyPlannerData(),
+        items: createDefaultUserItems()
+      };
+      saveAccountsDB();
+      loginUser(uInput);
+    } else {
+      // Login Existing Account
+      if (!accountsDB[uInput] || accountsDB[uInput].password !== pInput) {
+        showAuthError('Incorrect username or password.');
+        return;
+      }
+      loginUser(uInput);
+    }
+  }
+
+  function loginAsGuest() {
+    isGuest = true;
+    currentUser = null;
+    document.getElementById('current-user-display').innerText = 'Guest (Unsaved Session)';
+    
+    // Load from local storage fallback if present, else default
+    const guestData = localStorage.getItem('hkdse_guest_planner');
+    const guestItems = localStorage.getItem('hkdse_guest_items');
+
+    plannerData = guestData ? JSON.parse(guestData) : createEmptyPlannerData();
+    items = guestItems ? JSON.parse(guestItems) : createDefaultUserItems();
+
+    startSession();
+  }
+
+  function loginUser(username) {
+    isGuest = false;
+    currentUser = username;
+    document.getElementById('current-user-display').innerText = username;
+
+    if (username === 'Writer') {
+      if (!accountsDB['Writer']) {
+        accountsDB['Writer'] = {
+          password: 'Charlie1992929',
+          plannerData: createEmptyPlannerData(),
+          items: JSON.parse(JSON.stringify(defaultWriterItems))
+        };
+      }
+    }
+
+    plannerData = accountsDB[username].plannerData || createEmptyPlannerData();
+    items = accountsDB[username].items || (username === 'Writer' ? JSON.parse(JSON.stringify(defaultWriterItems)) : createDefaultUserItems());
+
+    startSession();
+  }
+
+  function startSession() {
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    renderDays();
+    updateCalculations();
+  }
+
+  function logout() {
+    document.getElementById('main-app').style.display = 'none';
+    document.getElementById('auth-overlay').style.display = 'flex';
+    document.getElementById('auth-username').value = '';
+    document.getElementById('auth-password').value = '';
+    hideAuthError();
+  }
+
+  function createEmptyPlannerData() {
+    let pData = {};
+    days.forEach(day => { pData[day] = { blocks: [], locked: false }; });
+    return pData;
+  }
+
+  function createDefaultUserItems() {
+    let userItems = defaultUserSubjects.map((name, idx) => ({
+      name: name,
+      weight: 0,
+      allocation: '',
+      type: 'subject',
+      color: macaronColors[idx % macaronColors.length]
+    }));
+
+    userItems.push({ name: 'Buffer Time', weight: 0, allocation: '', type: 'buffer', color: '#94a3b8' });
+    userItems.push({ name: 'Extra Learning', weight: 0, allocation: '', type: 'extra', color: '#64748b' });
+
+    return userItems;
+  }
+
   function saveData() {
-    localStorage.setItem('hkdse_plannerData', JSON.stringify(plannerData));
-    localStorage.setItem('hkdse_items', JSON.stringify(items));
+    if (isGuest) {
+      localStorage.setItem('hkdse_guest_planner', JSON.stringify(plannerData));
+      localStorage.setItem('hkdse_guest_items', JSON.stringify(items));
+    } else if (currentUser && accountsDB[currentUser]) {
+      accountsDB[currentUser].plannerData = plannerData;
+      accountsDB[currentUser].items = items;
+      saveAccountsDB();
+    }
   }
 
   function clearPlannerData() {
     if (confirm('Are you sure you want to clear all timeline blocks and allocations?')) {
-      localStorage.removeItem('hkdse_plannerData');
-      localStorage.removeItem('hkdse_items');
-      loadSavedData();
+      plannerData = createEmptyPlannerData();
+      if (currentUser === 'Writer') {
+        items = JSON.parse(JSON.stringify(defaultWriterItems));
+      } else {
+        items = createDefaultUserItems();
+      }
+      saveData();
       renderDays();
       updateCalculations();
     }
   }
 
+  // --- Scroll State Helpers ---
   function saveScrollPositions() {
     days.forEach(day => {
       const wrapper = document.getElementById(`wrapper-${day}`);
-      if (wrapper) {
-        scrollPositions[day] = wrapper.scrollLeft;
-      }
+      if (wrapper) scrollPositions[day] = wrapper.scrollLeft;
     });
   }
 
   function restoreScrollPositions() {
     days.forEach(day => {
       const wrapper = document.getElementById(`wrapper-${day}`);
-      if (wrapper && scrollPositions[day] !== undefined) {
-        wrapper.scrollLeft = scrollPositions[day];
-      }
+      if (wrapper && scrollPositions[day] !== undefined) wrapper.scrollLeft = scrollPositions[day];
     });
   }
 
-  function init() {
-    loadSavedData();
-    renderDays();
-    setupSampleBlockEvents();
-    updateCalculations();
-  }
-
-  // Render Daily Timelines (12 AM to 12 PM to 12 AM)
+  // --- Timelines & Drag/Drop Rendering ---
   function renderDays() {
     saveScrollPositions();
-
     const container = document.getElementById('days-container');
     container.innerHTML = '';
 
@@ -451,16 +787,29 @@
       let blocksHTML = dayData.blocks.map((b, idx) => {
         const leftPos = b.startMinutes * 1; 
         const timeStr = formatMinutes(b.startMinutes);
+        
+        let blockStyle = `left: ${leftPos}px;`;
+        let blockClass = "placed-block grey";
+        let contentDisplay = timeStr;
+
+        if (b.completed && b.assignedSubject) {
+          const subItem = items.find(i => i.name === b.assignedSubject);
+          const subColor = subItem ? subItem.color : '#34d399';
+          blockStyle += ` background-color: ${subColor};`;
+          blockClass = "placed-block";
+          contentDisplay = `<div>✓</div><div style="font-size:0.55rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:55px;">${b.assignedSubject}</div>`;
+        }
+
         return `
-          <div class="placed-block ${dayData.locked ? (b.completed ? 'green' : 'grey') : 'grey'}" 
-               style="left: ${leftPos}px;" 
+          <div class="${blockClass}" 
+               style="${blockStyle}" 
                onmousedown="startLongPress(event, '${day}', ${idx})"
                onmouseleave="cancelLongPress()"
                onmouseup="cancelLongPress()"
                ontouchstart="startLongPress(event, '${day}', ${idx})"
                ontouchend="cancelLongPress()"
                onclick="handleBlockClick('${day}', ${idx})">
-            ${dayData.locked && b.completed ? '✓' : timeStr}
+            ${contentDisplay}
           </div>`;
       }).join('');
 
@@ -495,14 +844,12 @@
     return `${displayH}:${m === 0 ? '00' : m}${ampm}`;
   }
 
-  // Long-Press Duplicate Logic (0.8s)
   let longPressTimer = null;
   let isLongPressTriggered = false;
 
   function startLongPress(e, day, index) {
     if (plannerData[day].locked) return;
     isLongPressTriggered = false;
-
     longPressTimer = setTimeout(() => {
       isLongPressTriggered = true;
       duplicateBlock(day, index);
@@ -519,11 +866,9 @@
   function duplicateBlock(day, index) {
     const originalBlock = plannerData[day].blocks[index];
     if (!originalBlock) return;
-
     let nextStartMins = originalBlock.startMinutes + 60;
     if (nextStartMins > 1380) nextStartMins = 1380;
-
-    plannerData[day].blocks.push({ startMinutes: nextStartMins, completed: false });
+    plannerData[day].blocks.push({ startMinutes: nextStartMins, completed: false, assignedSubject: null });
     saveData();
     renderDays();
     updateCalculations();
@@ -542,13 +887,59 @@
     }
 
     if (plannerData[day].locked) {
-      plannerData[day].blocks[index].completed = !plannerData[day].blocks[index].completed;
+      const block = plannerData[day].blocks[index];
+      if (!block.completed) {
+        // Open Subject Pick Dialog
+        activeBlockContext = { day, index };
+        openSubjectDialog();
+      } else {
+        // Undo completion
+        block.completed = false;
+        block.assignedSubject = null;
+        saveData();
+        renderDays();
+        updateCalculations();
+      }
     } else {
       plannerData[day].blocks.splice(index, 1);
+      saveData();
+      renderDays();
+      updateCalculations();
     }
-    saveData();
-    renderDays();
-    updateCalculations();
+  }
+
+  function openSubjectDialog() {
+    const container = document.getElementById('subject-options-container');
+    container.innerHTML = '';
+
+    items.forEach(item => {
+      const btn = document.createElement('button');
+      btn.className = 'subject-option-btn';
+      btn.style.backgroundColor = item.color;
+      btn.innerText = item.name;
+      btn.onclick = () => selectSubjectForBlock(item.name);
+      container.appendChild(btn);
+    });
+
+    document.getElementById('subject-dialog-overlay').style.display = 'flex';
+  }
+
+  function closeSubjectDialog() {
+    document.getElementById('subject-dialog-overlay').style.display = 'none';
+    activeBlockContext = null;
+  }
+
+  function selectSubjectForBlock(subjectName) {
+    if (activeBlockContext) {
+      const { day, index } = activeBlockContext;
+      const block = plannerData[day].blocks[index];
+      block.completed = true;
+      block.assignedSubject = subjectName;
+      saveData();
+      renderDays();
+      updateCalculations();
+    }
+    closeSubjectDialog();
   }
 
   function calculateLeftEdgeMinutes(leftEdgeX) {
@@ -563,15 +954,13 @@
   function handleDrop(ev, day) {
     ev.preventDefault();
     if (plannerData[day].locked) return;
-
     const track = document.getElementById(`track-${day}`);
     const rect = track.getBoundingClientRect();
-    
     const cursorXOnTrack = ev.clientX - rect.left;
     const actualLeftEdgeX = cursorXOnTrack - grabOffsetX;
     const snappedMins = calculateLeftEdgeMinutes(actualLeftEdgeX);
 
-    plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false });
+    plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false, assignedSubject: null });
     saveData();
     renderDays();
     updateCalculations();
@@ -618,12 +1007,11 @@
               touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
             
             if (plannerData[day].locked) return;
-            
             const cursorXOnTrack = touch.clientX - rect.left;
             const actualLeftEdgeX = cursorXOnTrack - grabOffsetX;
             const snappedMins = calculateLeftEdgeMinutes(actualLeftEdgeX);
 
-            plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false });
+            plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false, assignedSubject: null });
             saveData();
             renderDays();
             updateCalculations();
@@ -638,7 +1026,7 @@
     }
   }
 
-  // Count active days filled with at least 1 block
+  // --- Calculations & Allocation ---
   function getActiveDaysCount() {
     return Object.values(plannerData).filter(day => day.blocks.length > 0).length;
   }
@@ -647,33 +1035,66 @@
     return Object.values(plannerData).reduce((acc, curr) => acc + curr.blocks.length, 0);
   }
 
+  function getWeekFinishedTotal() {
+    return Object.values(plannerData).reduce((acc, curr) => {
+      return acc + curr.blocks.filter(b => b.completed).length;
+    }, 0);
+  }
+
+  function getFinishedCountBySubject(subjectName) {
+    let count = 0;
+    Object.values(plannerData).forEach(day => {
+      day.blocks.forEach(b => {
+        if (b.completed && b.assignedSubject === subjectName) count++;
+      });
+    });
+    return count;
+  }
+
   function updateCalculations() {
     const weekTotal = getWeekTotal();
+    const weekFinished = getWeekFinishedTotal();
     const activeDays = getActiveDaysCount();
-    document.getElementById('week-total-display').innerText = weekTotal;
 
-    // Buffer: Active Days - 1 (min 0)
+    document.getElementById('week-total-display').innerText = weekTotal;
+    document.getElementById('week-finished-display').innerText = weekFinished;
+
     const bufferSuggested = Math.max(activeDays - 1, 0);
-    // Extra Learning: Active Days
     const extraSuggested = activeDays;
 
-    // Remaining total for academic subjects after Buffer & Extra
-    const academicTotal = Math.max(weekTotal - bufferSuggested - extraSuggested, 0);
+    let suggestions = [];
 
-    let remainingSubjectTotal = academicTotal;
-    const subjectsOnly = items.filter(i => i.type === 'subject');
+    if (currentUser === 'Writer') {
+      const academicTotal = Math.max(weekTotal - bufferSuggested - extraSuggested, 0);
+      let remainingSubjectTotal = academicTotal;
+      const subjectsOnly = items.filter(i => i.type === 'subject');
 
-    const suggestions = items.map((item) => {
-      if (item.type === 'buffer') return bufferSuggested;
-      if (item.type === 'extra') return extraSuggested;
+      suggestions = items.map((item) => {
+        if (item.type === 'buffer') return bufferSuggested;
+        if (item.type === 'extra') return extraSuggested;
 
-      // Calculate subject distribution dynamically
-      const subjectIdx = subjectsOnly.findIndex(s => s.name === item.name);
-      if (subjectIdx === subjectsOnly.length - 1) return remainingSubjectTotal;
-      let val = Math.round(academicTotal * item.weight);
-      remainingSubjectTotal -= val;
-      return val;
-    });
+        const subjectIdx = subjectsOnly.findIndex(s => s.name === item.name);
+        if (subjectIdx === subjectsOnly.length - 1) return remainingSubjectTotal;
+        let val = Math.round(academicTotal * item.weight);
+        remainingSubjectTotal -= val;
+        return val;
+      });
+    } else {
+      // Even distribution for non-Writer user subjects
+      const subjectsOnly = items.filter(i => i.type === 'subject');
+      const academicTotal = Math.max(weekTotal - bufferSuggested - extraSuggested, 0);
+      const evenBase = subjectsOnly.length > 0 ? Math.floor(academicTotal / subjectsOnly.length) : 0;
+      let remainder = subjectsOnly.length > 0 ? academicTotal % subjectsOnly.length : 0;
+
+      suggestions = items.map((item) => {
+        if (item.type === 'buffer') return bufferSuggested;
+        if (item.type === 'extra') return extraSuggested;
+
+        let val = evenBase + (remainder > 0 ? 1 : 0);
+        if (remainder > 0) remainder--;
+        return val;
+      });
+    }
 
     const tbody = document.getElementById('allocation-tbody');
     tbody.innerHTML = '';
@@ -681,15 +1102,22 @@
     const totalAllocated = items.reduce((sum, item) => sum + (parseInt(item.allocation) || 0), 0);
 
     items.forEach((item, idx) => {
-      const share = totalAllocated > 0 ? ((item.allocation / totalAllocated) * 100).toFixed(1) : '0.0';
+      const share = totalAllocated > 0 && item.allocation !== '' 
+        ? ((parseInt(item.allocation) / totalAllocated) * 100).toFixed(1) 
+        : '0.0';
+
+      const finishedCount = getFinishedCountBySubject(item.name);
       const isSpecial = item.type !== 'subject';
       const tr = document.createElement('tr');
       if (isSpecial) tr.className = 'special-row';
 
       tr.innerHTML = `
-        <td style="text-align: left; font-weight: 600; ${isSpecial ? 'color: var(--primary-dark);' : ''}">${item.name}</td>
+        <td style="text-align: left; font-weight: 600; ${isSpecial ? 'color: var(--primary-dark);' : ''}">
+          <span class="subject-tag" style="background-color: ${item.color};"></span>${item.name}
+        </td>
         <td>${suggestions[idx]}</td>
-        <td><input type="number" min="0" value="${item.allocation}" onchange="updateAllocation(${idx}, this.value)"></td>
+        <td><input type="number" min="0" value="${item.allocation}" placeholder="0" onchange="updateAllocation(${idx}, this.value)"></td>
+        <td style="font-weight: 700; color: var(--primary-dark);">${finishedCount}</td>
         <td>${share}%</td>
       `;
       tbody.appendChild(tr);
@@ -699,7 +1127,7 @@
   }
 
   function updateAllocation(index, val) {
-    items[index].allocation = parseInt(val) || 0;
+    items[index].allocation = val === '' ? '' : Math.max(0, parseInt(val) || 0);
     saveData();
     updateCalculations();
   }
@@ -710,14 +1138,14 @@
 
     if (allocated === total) {
       msg.className = 'status-box success';
-      msg.innerText = `✓ Perfect! Total allocated blocks (${allocated}) equals Week Total (${total}).`;
+      msg.innerText = `Great! Let's begin our work!`;
     } else {
       msg.className = 'status-box error';
-      msg.innerText = `⚠ Mismatch: Allocated ${allocated} blocks, but Week Total is ${total}. Adjust input values.`;
+      msg.innerText = `Let's try to allocate our blocks!! (Allocated: ${allocated} / Total: ${total})`;
     }
   }
 
-  window.onload = init;
+  window.onload = initApp;
 </script>
 </body>
 </html>
