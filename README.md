@@ -286,12 +286,49 @@
     updateCalculations();
   }
 
+  /* Safe Persistent Data Loader: Retains & merges previously planned blocks and subject allocations */
   function loadSavedData() {
     const localData = localStorage.getItem('hkdse_writer_planner');
     const localItems = localStorage.getItem('hkdse_writer_items');
     
-    plannerData = localData ? JSON.parse(localData) : createEmptyPlannerData();
-    if (localItems) items = JSON.parse(localItems);
+    // 1. Load or Initialize Timeline Blocks Data safely without overwriting missing days
+    if (localData) {
+      try {
+        const parsedData = JSON.parse(localData);
+        plannerData = createEmptyPlannerData();
+        days.forEach(day => {
+          if (parsedData[day] && Array.isArray(parsedData[day].blocks)) {
+            plannerData[day].blocks = parsedData[day].blocks;
+            plannerData[day].locked = !!parsedData[day].locked;
+          }
+        });
+      } catch(e) {
+        plannerData = createEmptyPlannerData();
+      }
+    } else {
+      plannerData = createEmptyPlannerData();
+    }
+
+    // 2. Load or Merge Subject Allocations safely preserving user inputs across updates
+    if (localItems) {
+      try {
+        const parsedItems = JSON.parse(localItems);
+        items = defaultWriterItems.map(defaultItem => {
+          const savedItem = parsedItems.find(i => i.name === defaultItem.name);
+          if (savedItem) {
+            return {
+              ...defaultItem,
+              allocation: savedItem.allocation !== undefined ? savedItem.allocation : defaultItem.allocation
+            };
+          }
+          return defaultItem;
+        });
+      } catch(e) {
+        items = JSON.parse(JSON.stringify(defaultWriterItems));
+      }
+    } else {
+      items = JSON.parse(JSON.stringify(defaultWriterItems));
+    }
   }
 
   function saveData() {
@@ -773,7 +810,6 @@
     updateCalculations();
   }
 
-  /* Updated Status display rule below the allocation table */
   function validateAllocation(allocated, total) {
     const msg = document.getElementById('validation-msg');
     
@@ -796,4 +832,5 @@
 </script>
 </body>
 </html>
+
 
