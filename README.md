@@ -18,6 +18,8 @@
       --danger-soft: #fef2f2;
       --danger-border: #fecaca;
       --success: #10b981;
+      --info-bg: #f8fafc;
+      --info-border: #e2e8f0;
     }
 
     * {
@@ -137,9 +139,27 @@
     .subject-tag { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
     .special-row { background-color: #f8fafc; }
 
-    .status-box { margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; display: none; }
-    .status-box.error { display: block; background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
-    .status-box.success { display: block; background: #ecfdf5; color: var(--success); border: 1px solid #a7f3d0; }
+    .status-box { 
+      margin-top: 12px; 
+      padding: 10px; 
+      border-radius: 8px; 
+      font-size: 0.85rem; 
+      font-weight: 600; 
+      display: none; 
+      text-align: center;
+    }
+    .status-box.incomplete { 
+      display: block; 
+      background: var(--info-bg); 
+      color: var(--text); 
+      border: 1px solid var(--info-border); 
+    }
+    .status-box.success { 
+      display: block; 
+      background: #ecfdf5; 
+      color: var(--success); 
+      border: 1px solid #a7f3d0; 
+    }
 
     .reset-area { display: flex; justify-content: center; margin-top: 18px; margin-bottom: 12px; }
     .reset-btn {
@@ -420,7 +440,7 @@
       let baseBlock = plannerData[day].blocks[idx];
       if (!baseBlock) return;
 
-      let nextMins = baseBlock.startMinutes + 60; // Next session (+1 hour)
+      let nextMins = baseBlock.startMinutes + 60;
       if (nextMins <= 1380) {
         plannerData[day].blocks.push({
           startMinutes: nextMins,
@@ -442,7 +462,6 @@
           isMoved = true;
           clearDupTimer();
 
-          // Pick up block to move across days
           draggedBlock = plannerData[day].blocks[idx];
           movingSourceContext = { day, idx };
 
@@ -476,7 +495,6 @@
         const endX = upEvent.changedTouches ? upEvent.changedTouches[0].clientX : upEvent.clientX;
         const endY = upEvent.changedTouches ? upEvent.changedTouches[0].clientY : upEvent.clientY;
 
-        // Find which timeline track it was dropped onto
         let droppedOnDay = null;
         days.forEach(d => {
           const track = document.getElementById(`track-${d}`);
@@ -496,7 +514,6 @@
           const actualLeftEdgeX = cursorXOnTrack - grabOffsetX;
           const snappedMins = calculateLeftEdgeMinutes(actualLeftEdgeX);
 
-          // Remove from old location and push to new
           plannerData[movingSourceContext.day].blocks.splice(movingSourceContext.idx, 1);
           draggedBlock.startMinutes = snappedMins;
           plannerData[droppedOnDay].blocks.push(draggedBlock);
@@ -520,7 +537,6 @@
         } else if (clickCount === 2) {
           clearTimeout(clickTimer);
           clickCount = 0;
-          // Double Click Deletes the block
           plannerData[day].blocks.splice(idx, 1);
           saveData();
           renderDays();
@@ -757,16 +773,22 @@
     updateCalculations();
   }
 
+  /* Updated Status display rule below the allocation table */
   function validateAllocation(allocated, total) {
     const msg = document.getElementById('validation-msg');
-    if (total === 0) { msg.style.display = 'none'; return; }
+    
+    if (total === 0) { 
+      msg.className = 'status-box incomplete';
+      msg.innerText = `Let's fill in the blocks with subjects! (${allocated}/${total})`;
+      return; 
+    }
 
     if (allocated === total) {
       msg.className = 'status-box success';
-      msg.innerText = `Great! Let's begin our work!`;
+      msg.innerText = `Great! Let's build our blocks!`;
     } else {
-      msg.className = 'status-box error';
-      msg.innerText = `Let's try to allocate our blocks!! (Allocated: ${allocated} / Total: ${total})`;
+      msg.className = 'status-box incomplete';
+      msg.innerText = `Let's fill in the blocks with subjects! (${allocated}/${total})`;
     }
   }
 
