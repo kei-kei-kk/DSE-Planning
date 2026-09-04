@@ -9,7 +9,6 @@
       --card-bg: #ffffff;
       --primary: #3b82f6;
       --primary-dark: #1d4ed8;
-      --accent-blue: #60a5fa;
       --text: #1e293b;
       --text-muted: #64748b;
       --border: #cbd5e1;
@@ -18,7 +17,6 @@
       --danger: #ef4444;
       --danger-soft: #fef2f2;
       --danger-border: #fecaca;
-      --danger-hover: #fee2e2;
       --success: #10b981;
     }
 
@@ -57,79 +55,12 @@
       margin-bottom: 12px;
     }
 
-    /* Auth Overlay */
-    .auth-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-    }
-
-    .auth-card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 24px;
-      width: 90%;
-      max-width: 380px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-      text-align: center;
-    }
-
-    .auth-card h2 { font-size: 1.3rem; margin-bottom: 12px; color: #0f172a; }
-
-    .auth-tabs {
-      display: flex; gap: 8px; margin-bottom: 16px;
-      background: #f1f5f9; padding: 4px; border-radius: 8px;
-    }
-
-    .auth-tab {
-      flex: 1; padding: 8px; font-size: 0.85rem; font-weight: 600;
-      border: none; background: transparent; color: var(--text-muted);
-      cursor: pointer; border-radius: 6px;
-    }
-
-    .auth-tab.active {
-      background: white; color: var(--primary-dark);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .auth-input {
-      width: 100%; padding: 10px 12px; margin-bottom: 12px;
-      border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem;
-    }
-
-    .auth-btn {
-      width: 100%; padding: 10px; background: var(--primary);
-      color: white; border: none; border-radius: 8px; font-weight: 600;
-      cursor: pointer; font-size: 0.9rem;
-    }
-
-    .auth-btn:hover { background: var(--primary-dark); }
-
-    .guest-btn {
-      background: transparent; border: none; color: var(--text-muted);
-      font-size: 0.8rem; margin-top: 14px; cursor: pointer; text-decoration: underline;
-    }
-
-    .auth-error {
-      color: var(--danger); font-size: 0.75rem; margin-bottom: 10px; display: none;
-    }
-
     .container { max-width: 900px; margin: 0 auto; }
 
     .user-bar {
       display: flex; justify-content: space-between; align-items: center;
       background: rgba(255, 255, 255, 0.7); padding: 8px 14px;
       border-radius: 10px; margin-bottom: 12px; font-size: 0.85rem; font-weight: 600;
-    }
-
-    .logout-btn {
-      background: #e2e8f0; border: none; padding: 4px 10px;
-      border-radius: 6px; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);
     }
 
     h1 { font-size: 1.25rem; text-align: center; margin-bottom: 12px; color: #0f172a; font-weight: 700; }
@@ -140,27 +71,15 @@
       border: 1px solid rgba(226, 232, 240, 0.8);
     }
 
-    /* Encourage Tip Banner */
-    .tip-banner {
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      color: #1e40af;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      text-align: center;
-      margin-bottom: 12px;
-    }
-
+    /* Total Banner Right-Aligned */
     .total-banner {
-      display: flex; justify-content: center; align-items: center;
+      display: flex; justify-content: flex-end; align-items: center;
       background: linear-gradient(135deg, #2563eb, #3b82f6); color: white;
-      padding: 14px 18px; border-radius: 10px; margin-bottom: 14px;
+      padding: 10px 18px; border-radius: 10px; margin-bottom: 14px;
       box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
     }
 
-    .total-banner .value-group { font-size: 1.2rem; font-weight: 700; text-align: center; }
+    .total-banner .value-group { font-size: 1.1rem; font-weight: 700; text-align: right; }
 
     .sample-block {
       width: 75px; height: 38px; background: var(--block-grey);
@@ -217,49 +136,8 @@
       border-radius: 6px; text-align: center; font-weight: 600; color: var(--text);
     }
 
-    /* Editable Subject Name Input */
-    .subject-edit-input {
-      border: 1px transparent;
-      background: transparent;
-      font-weight: 600;
-      font-size: 0.825rem;
-      color: var(--text);
-      padding: 2px 4px;
-      border-radius: 4px;
-      width: 110px;
-    }
-    .subject-edit-input:hover, .subject-edit-input:focus {
-      background: #f1f5f9;
-      border: 1px solid var(--border);
-    }
-
     .subject-tag { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
     .special-row { background-color: #f8fafc; }
-
-    .add-subject-btn {
-      width: 100%;
-      margin-top: 8px;
-      padding: 8px;
-      background: #f1f5f9;
-      border: 1px dashed var(--primary);
-      color: var(--primary-dark);
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-    .add-subject-btn:hover {
-      background: #e2e8f0;
-    }
-
-    .suggestion-note {
-      margin-top: 10px;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-align: center;
-      font-style: italic;
-    }
 
     .status-box { margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; display: none; }
     .status-box.error { display: block; background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
@@ -287,53 +165,33 @@
 </head>
 <body>
 
-<div class="auth-overlay" id="auth-overlay">
-  <div class="auth-card">
-    <h2>Revision Planner Login</h2>
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Login</button>
-      <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Create Account</button>
-    </div>
-    
-    <div id="auth-error" class="auth-error"></div>
-    
-    <input type="text" id="auth-username" class="auth-input" placeholder="Username (3-20 chars)" maxlength="20">
-    <input type="password" id="auth-password" class="auth-input" placeholder="Password (3-20 chars)" maxlength="20">
-    
-    <button class="auth-btn" id="auth-submit-btn" onclick="handleAuthSubmit()">Login</button>
-    <button class="guest-btn" onclick="loginAsGuest()">Continue as Guest (Session Only)</button>
-  </div>
-</div>
-
-<div class="container" id="main-app" style="display: none;">
+<div class="container" id="main-app">
   <div class="user-bar">
-    <span>User: <strong id="current-user-display">Guest</strong></span>
-    <button class="logout-btn" onclick="logout()">Logout / Switch User</button>
+    <span>Profile: <strong>Writer Mode</strong></span>
   </div>
 
   <h1>HKDSE Revision Planner</h1>
 
-  <div class="tip-banner" id="tip-banner" style="display: none;">
-    💡 <strong>Revision Tip:</strong> 1 block = 50 min revision + 10 min break
-  </div>
-
+  <!-- Sticky Top Drop Zone -->
   <div class="sticky-drop-bar">
     <div class="sample-block" id="sticky-sample-block" draggable="true">1 Block</div>
     <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
-      <strong>Quick Drop:</strong> Drag this block directly down to any timeline without scrolling up!
+      <strong>Quick Drop:</strong> Drag or touch-drag this block down to any timeline!
     </span>
   </div>
 
   <div class="card">
+    <!-- Total Week Blocks Display (Right Aligned) -->
     <div class="total-banner">
       <div class="value-group">
-        Total Week Blocks: <span id="week-finished-display">0</span> / <span id="week-total-display">0</span>
+        Total Week Blocks : <span id="week-finished-display">0</span> / <span id="week-total-display">0</span>
       </div>
     </div>
 
     <div id="days-container"></div>
   </div>
 
+  <!-- Subject Allocation Section -->
   <div class="card">
     <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; color: #334155;">Time Allocation</div>
     <table>
@@ -348,11 +206,6 @@
       </thead>
       <tbody id="allocation-tbody"></tbody>
     </table>
-    
-    <div id="non-writer-extras" style="display: none;">
-      <button class="add-subject-btn" onclick="addNewSubject()">+ Add New Subject</button>
-      <div class="suggestion-note">Tip: Buffer time or extra study columns can be added as custom subjects if needed.</div>
-    </div>
 
     <div id="validation-msg" class="status-box"></div>
   </div>
@@ -364,6 +217,7 @@
   </div>
 </div>
 
+<!-- Modal for selecting subject when completing block -->
 <div id="subject-dialog-overlay" class="subject-dialog-overlay" style="display: none;">
   <div class="subject-dialog">
     <h3>Select Subject</h3>
@@ -392,15 +246,7 @@
     { name: 'Extra Learning', weight: 0, allocation: 0, type: 'extra', color: '#64748b' }
   ];
 
-  // Non-Writer defaults: 3 subjects only
-  const defaultUserSubjects = ['Subject 1', 'Subject 2', 'Subject 3'];
-
-  let currentAuthMode = 'login';
-  let currentUser = null; 
-  let isGuest = false;
-
-  let accountsDB = {}; 
-  let items = [];
+  let items = JSON.parse(JSON.stringify(defaultWriterItems));
   let plannerData = {};
   let scrollPositions = {};
   let grabOffsetX = 0;
@@ -408,149 +254,30 @@
   let activeBlockContext = null;
   let draggedBlock = null;
 
-  // Timers for 0.2s redrop & 0.8s continuous duplicate
+  // Fixed Press Handlers
   let holdTimer = null;
   let dupInterval = null;
   let isHoldPickedUp = false;
+  let isDupActive = false;
 
   function initApp() {
-    loadAccountsDB();
+    loadSavedData();
     setupSampleBlockEvents();
-    checkExistingSession();
-  }
-
-  function loadAccountsDB() {
-    const db = localStorage.getItem('hkdse_accounts_db');
-    accountsDB = db ? JSON.parse(db) : {};
-  }
-
-  function saveAccountsDB() {
-    localStorage.setItem('hkdse_accounts_db', JSON.stringify(accountsDB));
-  }
-
-  // Restore session upon page refresh without forcing re-login
-  function checkExistingSession() {
-    const activeSession = localStorage.getItem('hkdse_active_session');
-    if (activeSession) {
-      if (activeSession === 'Guest') {
-        loginAsGuest();
-      } else if (accountsDB[activeSession] || activeSession === 'Writer') {
-        loginUser(activeSession);
-      }
-    }
-  }
-
-  function switchAuthTab(mode) {
-    currentAuthMode = mode;
-    document.getElementById('tab-login').className = `auth-tab ${mode === 'login' ? 'active' : ''}`;
-    document.getElementById('tab-register').className = `auth-tab ${mode === 'register' ? 'active' : ''}`;
-    document.getElementById('auth-submit-btn').innerText = mode === 'login' ? 'Login' : 'Create Account';
-    hideAuthError();
-  }
-
-  function showAuthError(msg) {
-    const err = document.getElementById('auth-error');
-    err.innerText = msg;
-    err.style.display = 'block';
-  }
-
-  function hideAuthError() {
-    document.getElementById('auth-error').style.display = 'none';
-  }
-
-  function handleAuthSubmit() {
-    const uInput = document.getElementById('auth-username').value.trim();
-    const pInput = document.getElementById('auth-password').value.trim();
-
-    if (!/^[a-zA-Z0-9]{3,20}$/.test(uInput)) {
-      showAuthError('Username must be 3-20 alphanumeric characters.');
-      return;
-    }
-
-    if (pInput.length < 3 || pInput.length > 20) {
-      showAuthError('Password must be 3-20 characters.');
-      return;
-    }
-
-    if (uInput.toLowerCase() === 'writer') {
-      if (uInput === 'Writer' && pInput === 'Charlie1992929') {
-        loginUser('Writer');
-        return;
-      } else {
-        showAuthError('Invalid credentials for reserved account.');
-        return;
-      }
-    }
-
-    if (currentAuthMode === 'register') {
-      if (accountsDB[uInput]) {
-        showAuthError('Username already exists. Please pick another.');
-        return;
-      }
-      accountsDB[uInput] = { password: pInput, plannerData: createEmptyPlannerData(), items: createDefaultUserItems() };
-      saveAccountsDB();
-      loginUser(uInput);
-    } else {
-      if (!accountsDB[uInput] || accountsDB[uInput].password !== pInput) {
-        showAuthError('Incorrect username or password.');
-        return;
-      }
-      loginUser(uInput);
-    }
-  }
-
-  function loginAsGuest() {
-    isGuest = true;
-    currentUser = null;
-    localStorage.setItem('hkdse_active_session', 'Guest');
-    document.getElementById('current-user-display').innerText = 'Guest (Session Saved)';
-    
-    const guestData = localStorage.getItem('hkdse_guest_planner');
-    const guestItems = localStorage.getItem('hkdse_guest_items');
-
-    plannerData = guestData ? JSON.parse(guestData) : createEmptyPlannerData();
-    items = guestItems ? JSON.parse(guestItems) : createDefaultUserItems();
-
-    startSession();
-  }
-
-  function loginUser(username) {
-    isGuest = false;
-    currentUser = username;
-    localStorage.setItem('hkdse_active_session', username);
-    document.getElementById('current-user-display').innerText = username;
-
-    if (username === 'Writer' && !accountsDB['Writer']) {
-      accountsDB['Writer'] = { password: 'Charlie1992929', plannerData: createEmptyPlannerData(), items: JSON.parse(JSON.stringify(defaultWriterItems)) };
-      saveAccountsDB();
-    }
-
-    plannerData = accountsDB[username] ? accountsDB[username].plannerData || createEmptyPlannerData() : createEmptyPlannerData();
-    items = accountsDB[username] ? accountsDB[username].items || (username === 'Writer' ? JSON.parse(JSON.stringify(defaultWriterItems)) : createDefaultUserItems()) : createDefaultUserItems();
-
-    startSession();
-  }
-
-  function startSession() {
-    document.getElementById('auth-overlay').style.display = 'none';
-    document.getElementById('main-app').style.display = 'block';
-    
-    const isWriter = (currentUser === 'Writer');
-    
-    document.getElementById('tip-banner').style.display = isWriter ? 'none' : 'block';
-    document.getElementById('non-writer-extras').style.display = isWriter ? 'none' : 'block';
-
     renderDays();
     updateCalculations();
   }
 
-  function logout() {
-    localStorage.removeItem('hkdse_active_session');
-    document.getElementById('main-app').style.display = 'none';
-    document.getElementById('auth-overlay').style.display = 'flex';
-    document.getElementById('auth-username').value = '';
-    document.getElementById('auth-password').value = '';
-    hideAuthError();
+  function loadSavedData() {
+    const localData = localStorage.getItem('hkdse_writer_planner');
+    const localItems = localStorage.getItem('hkdse_writer_items');
+    
+    plannerData = localData ? JSON.parse(localData) : createEmptyPlannerData();
+    if (localItems) items = JSON.parse(localItems);
+  }
+
+  function saveData() {
+    localStorage.setItem('hkdse_writer_planner', JSON.stringify(plannerData));
+    localStorage.setItem('hkdse_writer_items', JSON.stringify(items));
   }
 
   function createEmptyPlannerData() {
@@ -559,41 +286,10 @@
     return pData;
   }
 
-  function createDefaultUserItems() {
-    let userItems = defaultUserSubjects.map((name, idx) => ({
-      name: name, weight: 0, allocation: '', type: 'subject', color: macaronColors[idx % macaronColors.length]
-    }));
-    return userItems;
-  }
-
-  function addNewSubject() {
-    const nextIdx = items.length + 1;
-    items.push({
-      name: `Subject ${nextIdx}`,
-      weight: 0,
-      allocation: '',
-      type: 'subject',
-      color: macaronColors[(items.length) % macaronColors.length]
-    });
-    saveData();
-    updateCalculations();
-  }
-
-  function saveData() {
-    if (isGuest) {
-      localStorage.setItem('hkdse_guest_planner', JSON.stringify(plannerData));
-      localStorage.setItem('hkdse_guest_items', JSON.stringify(items));
-    } else if (currentUser && accountsDB[currentUser]) {
-      accountsDB[currentUser].plannerData = plannerData;
-      accountsDB[currentUser].items = items;
-      saveAccountsDB();
-    }
-  }
-
   function clearPlannerData() {
     if (confirm('Are you sure you want to clear all timeline blocks and allocations?')) {
       plannerData = createEmptyPlannerData();
-      items = (currentUser === 'Writer') ? JSON.parse(JSON.stringify(defaultWriterItems)) : createDefaultUserItems();
+      items = JSON.parse(JSON.stringify(defaultWriterItems));
       saveData();
       renderDays();
       updateCalculations();
@@ -652,12 +348,11 @@
         return `
           <div class="${blockClass}" 
                style="${blockStyle}" 
-               onmousedown="startHoldAndDrag(event, '${day}', ${idx})"
-               onmouseleave="cancelHoldAndDrag()"
-               onmouseup="cancelHoldAndDrag()"
-               ontouchstart="startHoldAndDrag(event, '${day}', ${idx})"
-               ontouchend="cancelHoldAndDrag()"
-               onclick="handleBlockClick('${day}', ${idx})">
+               onmousedown="handleBlockMouseDown(event, '${day}', ${idx})"
+               onmouseup="handleBlockMouseUp(event, '${day}', ${idx})"
+               onmouseleave="handleBlockMouseLeave(event)"
+               ontouchstart="handleBlockTouchStart(event, '${day}', ${idx})"
+               ontouchend="handleBlockTouchEnd(event, '${day}', ${idx})">
             ${contentDisplay}
           </div>`;
       }).join('');
@@ -693,22 +388,32 @@
     return `${displayH}:${m === 0 ? '00' : m}${ampm}`;
   }
 
-  function startHoldAndDrag(e, day, index) {
-    if (plannerData[day].locked) return;
-    isHoldPickedUp = false;
+  /* Fixed 0.2s Pick-up & 0.8s Continuous Duplication Engine */
+  function handleBlockMouseDown(e, day, idx) { startHoldTimers(day, idx); }
+  function handleBlockTouchStart(e, day, idx) { startHoldTimers(day, idx); }
 
+  function startHoldTimers(day, idx) {
+    if (plannerData[day].locked) return;
+    
+    cancelHoldTimers();
+    isHoldPickedUp = false;
+    isDupActive = false;
+
+    // 0.2-second pickup logic
     holdTimer = setTimeout(() => {
       isHoldPickedUp = true;
-      draggedBlock = plannerData[day].blocks[index];
-      plannerData[day].blocks.splice(index, 1);
+      draggedBlock = plannerData[day].blocks[idx];
+      plannerData[day].blocks.splice(idx, 1);
       saveData();
       renderDays();
     }, 200);
 
+    // 0.8-second continuous duplication logic
     dupInterval = setTimeout(() => {
-      cancelHoldAndDrag();
+      cancelHoldTimers();
+      isDupActive = true;
       
-      let baseBlock = plannerData[day].blocks[index];
+      let baseBlock = plannerData[day].blocks[idx];
       if (!baseBlock) return;
 
       let lastMins = baseBlock.startMinutes;
@@ -726,22 +431,29 @@
           renderDays();
           updateCalculations();
         } else {
-          clearInterval(dupInterval);
+          cancelHoldTimers();
         }
       }, 200);
     }, 800);
   }
 
-  function cancelHoldAndDrag() {
-    if (holdTimer) {
-      clearTimeout(holdTimer);
-      holdTimer = null;
+  function handleBlockMouseUp(e, day, idx) { processBlockRelease(day, idx); }
+  function handleBlockTouchEnd(e, day, idx) { processBlockRelease(day, idx); }
+  function handleBlockMouseLeave(e) { cancelHoldTimers(); }
+
+  function processBlockRelease(day, idx) {
+    const tookAction = isHoldPickedUp || isDupActive;
+    cancelHoldTimers();
+
+    // If it was a quick single click/tap without holding
+    if (!tookAction) {
+      handleBlockClick(day, idx);
     }
-    if (dupInterval) {
-      clearInterval(dupInterval);
-      clearTimeout(dupInterval);
-      dupInterval = null;
-    }
+  }
+
+  function cancelHoldTimers() {
+    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+    if (dupInterval) { clearInterval(dupInterval); clearTimeout(dupInterval); dupInterval = null; }
   }
 
   function toggleLock(day) {
@@ -751,11 +463,6 @@
   }
 
   function handleBlockClick(day, index) {
-    if (isHoldPickedUp) {
-      isHoldPickedUp = false;
-      return;
-    }
-
     if (plannerData[day].locked) {
       const block = plannerData[day].blocks[index];
       if (!block.completed) {
@@ -909,24 +616,6 @@
     }
   }
 
-  function updateSubjectName(index, newName) {
-    const oldName = items[index].name;
-    const trimmed = newName.trim();
-    if (!trimmed) return;
-
-    items[index].name = trimmed;
-
-    Object.values(plannerData).forEach(day => {
-      day.blocks.forEach(b => {
-        if (b.assignedSubject === oldName) b.assignedSubject = trimmed;
-      });
-    });
-
-    saveData();
-    renderDays();
-    updateCalculations();
-  }
-
   function getActiveDaysCount() {
     return Object.values(plannerData).filter(day => day.blocks.length > 0).length;
   }
@@ -960,37 +649,20 @@
     const bufferSuggested = Math.max(activeDays - 1, 0);
     const extraSuggested = activeDays;
 
-    let suggestions = [];
+    const academicTotal = Math.max(weekTotal - bufferSuggested - extraSuggested, 0);
+    let remainingSubjectTotal = academicTotal;
+    const subjectsOnly = items.filter(i => i.type === 'subject');
 
-    if (currentUser === 'Writer') {
-      const academicTotal = Math.max(weekTotal - bufferSuggested - extraSuggested, 0);
-      let remainingSubjectTotal = academicTotal;
-      const subjectsOnly = items.filter(i => i.type === 'subject');
+    const suggestions = items.map((item) => {
+      if (item.type === 'buffer') return bufferSuggested;
+      if (item.type === 'extra') return extraSuggested;
 
-      suggestions = items.map((item) => {
-        if (item.type === 'buffer') return bufferSuggested;
-        if (item.type === 'extra') return extraSuggested;
-
-        const subjectIdx = subjectsOnly.findIndex(s => s.name === item.name);
-        if (subjectIdx === subjectsOnly.length - 1) return remainingSubjectTotal;
-        let val = Math.round(academicTotal * item.weight);
-        remainingSubjectTotal -= val;
-        return val;
-      });
-    } else {
-      const subjectsOnly = items.filter(i => i.type === 'subject');
-      const evenBase = subjectsOnly.length > 0 ? Math.floor(weekTotal / subjectsOnly.length) : 0;
-      let remainder = subjectsOnly.length > 0 ? weekTotal % subjectsOnly.length : 0;
-
-      suggestions = items.map((item) => {
-        if (item.type === 'buffer') return bufferSuggested;
-        if (item.type === 'extra') return extraSuggested;
-
-        let val = evenBase + (remainder > 0 ? 1 : 0);
-        if (remainder > 0) remainder--;
-        return val;
-      });
-    }
+      const subjectIdx = subjectsOnly.findIndex(s => s.name === item.name);
+      if (subjectIdx === subjectsOnly.length - 1) return remainingSubjectTotal;
+      let val = Math.round(academicTotal * item.weight);
+      remainingSubjectTotal -= val;
+      return val;
+    });
 
     const tbody = document.getElementById('allocation-tbody');
     tbody.innerHTML = '';
@@ -1007,13 +679,11 @@
       const tr = document.createElement('tr');
       if (isSpecial) tr.className = 'special-row';
 
+      // Read-only subject names (no editing inputs)
       tr.innerHTML = `
         <td style="text-align: left; font-weight: 600; ${isSpecial ? 'color: var(--primary-dark);' : ''}">
           <span class="subject-tag" style="background-color: ${item.color};"></span>
-          ${isSpecial 
-            ? item.name 
-            : `<input type="text" class="subject-edit-input" value="${item.name}" onchange="updateSubjectName(${idx}, this.value)" placeholder="Subject Name">`
-          }
+          ${item.name}
         </td>
         <td>${suggestions[idx]}</td>
         <td><input type="number" min="0" value="${item.allocation}" placeholder="0" onchange="updateAllocation(${idx}, this.value)"></td>
