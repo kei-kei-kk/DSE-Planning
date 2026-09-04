@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -294,7 +295,7 @@
     💡 <strong>Revision Tip:</strong> 1 block = 50 min revision + 10 min break
   </div>
 
-  <!-- Sticky Top Drop Zone (Positioned directly below the explanation line) -->
+  <!-- Sticky Top Drop Zone (Positioned directly below the tip banner) -->
   <div class="sticky-drop-bar">
     <div class="sample-block" id="sticky-sample-block" draggable="true">1 Block</div>
     <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
@@ -365,7 +366,6 @@
     { name: 'Extra Learning', weight: 0, allocation: 0, type: 'extra', color: '#64748b' }
   ];
 
-  // Removed Chinese, English, Maths for non-Writer preset allocation
   const defaultUserSubjects = [
     'Subject 1', 'Subject 2', 'Subject 3', 'Elective 1', 'Elective 2', 'Elective 3'
   ];
@@ -489,7 +489,6 @@
     document.getElementById('auth-overlay').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
     
-    // Toggle Revision Tip Banner for Non-Writer Users
     const tipBanner = document.getElementById('tip-banner');
     tipBanner.style.display = (currentUser === 'Writer') ? 'none' : 'block';
 
