@@ -38,14 +38,14 @@
       padding-bottom: 40px;
     }
 
-    /* Sticky Drop Bar on Scroll */
+    /* Sticky Drop Bar with Instructions */
     .sticky-drop-bar {
       position: sticky;
       top: 10px;
       z-index: 1000;
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(8px);
-      padding: 8px 14px;
+      padding: 10px 14px;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       border: 2px dashed var(--primary);
@@ -71,7 +71,6 @@
       border: 1px solid rgba(226, 232, 240, 0.8);
     }
 
-    /* Total Banner Right-Aligned */
     .total-banner {
       display: flex; justify-content: flex-end; align-items: center;
       background: linear-gradient(135deg, #2563eb, #3b82f6); color: white;
@@ -172,16 +171,16 @@
 
   <h1>HKDSE Revision Planner</h1>
 
-  <!-- Sticky Top Drop Zone -->
   <div class="sticky-drop-bar">
     <div class="sample-block" id="sticky-sample-block" draggable="true">1 Block</div>
-    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
-      <strong>Quick Drop:</strong> Drag or touch-drag this block down to any timeline!
-    </span>
+    <div style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.35;">
+      • <strong>Delete:</strong> Double click any placed block on the timeline to delete it.<br>
+      • <strong>0.8s Continuous Duplication:</strong> Long press a placed block for 0.8 seconds to duplicate automatically to the next session.<br>
+      • <strong>Move Across Days:</strong> Click/touch & hold a block to drag it flexibly anywhere across timeline tracks and days.
+    </div>
   </div>
 
   <div class="card">
-    <!-- Total Week Blocks Display (Right Aligned) -->
     <div class="total-banner">
       <div class="value-group">
         Total Week Blocks : <span id="week-finished-display">0</span> / <span id="week-total-display">0</span>
@@ -191,7 +190,6 @@
     <div id="days-container"></div>
   </div>
 
-  <!-- Subject Allocation Section -->
   <div class="card">
     <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; color: #334155;">Time Allocation</div>
     <table>
@@ -217,7 +215,6 @@
   </div>
 </div>
 
-<!-- Modal for selecting subject when completing block -->
 <div id="subject-dialog-overlay" class="subject-dialog-overlay" style="display: none;">
   <div class="subject-dialog">
     <h3>Select Subject</h3>
@@ -254,11 +251,15 @@
   let activeBlockContext = null;
   let draggedBlock = null;
 
-  // Fixed Press Handlers
-  let holdTimer = null;
+  // Timers for 0.8s Continuous Duplication & Click handling
+  let dupTimer = null;
   let dupInterval = null;
-  let isHoldPickedUp = false;
-  let isDupActive = false;
+  let clickTimer = null;
+  let clickCount = 0;
+
+  // Active floating ghost element for dragging existing blocks across days
+  let ghostBlock = null;
+  let movingSourceContext = null;
 
   function initApp() {
     loadSavedData();
@@ -348,11 +349,8 @@
         return `
           <div class="${blockClass}" 
                style="${blockStyle}" 
-               onmousedown="handleBlockMouseDown(event, '${day}', ${idx})"
-               onmouseup="handleBlockMouseUp(event, '${day}', ${idx})"
-               onmouseleave="handleBlockMouseLeave(event)"
-               ontouchstart="handleBlockTouchStart(event, '${day}', ${idx})"
-               ontouchend="handleBlockTouchEnd(event, '${day}', ${idx})">
+               onmousedown="handleBlockPressStart(event, '${day}', ${idx})"
+               ontouchstart="handleBlockPressStart(event, '${day}', ${idx})">
             ${contentDisplay}
           </div>`;
       }).join('');
@@ -388,38 +386,46 @@
     return `${displayH}:${m === 0 ? '00' : m}${ampm}`;
   }
 
-  /* Fixed 0.2s Pick-up & 0.8s Continuous Duplication Engine */
-  function handleBlockMouseDown(e, day, idx) { startHoldTimers(day, idx); }
-  function handleBlockTouchStart(e, day, idx) { startHoldTimers(day, idx); }
+  /* Core Movement & 0.8s Continuous Duplication Engine */
+  function handleBlockPressStart(e, day, idx) {
+    e.preventDefault();
+    e.stopPropagation();
 
-  function startHoldTimers(day, idx) {
-    if (plannerData[day].locked) return;
-    
-    cancelHoldTimers();
-    isHoldPickedUp = false;
-    isDupActive = false;
+    if (plannerData[day].locked) {
+      // In locked mode, single click assigns subject
+      const block = plannerData[day].blocks[idx];
+      if (!block.completed) {
+        activeBlockContext = { day, index: idx };
+        openSubjectDialog();
+      } else {
+        block.completed = false;
+        block.assignedSubject = null;
+        saveData();
+        renderDays();
+        updateCalculations();
+      }
+      return;
+    }
 
-    // 0.2-second pickup logic
-    holdTimer = setTimeout(() => {
-      isHoldPickedUp = true;
-      draggedBlock = plannerData[day].blocks[idx];
-      plannerData[day].blocks.splice(idx, 1);
-      saveData();
-      renderDays();
-    }, 200);
+    const targetEl = e.currentTarget;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const rect = targetEl.getBoundingClientRect();
+    grabOffsetX = clientX - rect.left;
 
-    // 0.8-second continuous duplication logic
-    dupInterval = setTimeout(() => {
-      cancelHoldTimers();
-      isDupActive = true;
-      
+    let isMoved = false;
+    let isDuplicating = false;
+
+    // Start 0.8-second timer for continuous duplication
+    dupTimer = setTimeout(() => {
+      isDuplicating = true;
       let baseBlock = plannerData[day].blocks[idx];
       if (!baseBlock) return;
 
       let lastMins = baseBlock.startMinutes;
       
       dupInterval = setInterval(() => {
-        let newMins = lastMins + 60;
+        let newMins = lastMins + 60; // Next session (+1 hour)
         if (newMins <= 1380) {
           plannerData[day].blocks.push({
             startMinutes: newMins,
@@ -431,28 +437,115 @@
           renderDays();
           updateCalculations();
         } else {
-          cancelHoldTimers();
+          clearDupTimers();
         }
       }, 200);
     }, 800);
-  }
 
-  function handleBlockMouseUp(e, day, idx) { processBlockRelease(day, idx); }
-  function handleBlockTouchEnd(e, day, idx) { processBlockRelease(day, idx); }
-  function handleBlockMouseLeave(e) { cancelHoldTimers(); }
+    function onPointerMove(moveEvent) {
+      const curX = moveEvent.touches ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const curY = moveEvent.touches ? moveEvent.touches[0].clientY : moveEvent.clientY;
 
-  function processBlockRelease(day, idx) {
-    const tookAction = isHoldPickedUp || isDupActive;
-    cancelHoldTimers();
+      if (Math.abs(curX - clientX) > 5 || Math.abs(curY - clientY) > 5) {
+        if (!isMoved && !isDuplicating) {
+          isMoved = true;
+          clearDupTimers();
 
-    // If it was a quick single click/tap without holding
-    if (!tookAction) {
-      handleBlockClick(day, idx);
+          // Pick up block to move across days
+          draggedBlock = plannerData[day].blocks[idx];
+          movingSourceContext = { day, idx };
+
+          ghostBlock = targetEl.cloneNode(true);
+          ghostBlock.style.position = 'fixed';
+          ghostBlock.style.opacity = '0.85';
+          ghostBlock.style.pointerEvents = 'none';
+          ghostBlock.style.zIndex = '10000';
+          document.body.appendChild(ghostBlock);
+        }
+      }
+
+      if (ghostBlock) {
+        ghostBlock.style.left = `${curX - grabOffsetX}px`;
+        ghostBlock.style.top = `${curY - 20}px`;
+      }
     }
+
+    function onPointerUp(upEvent) {
+      window.removeEventListener('mousemove', onPointerMove);
+      window.removeEventListener('mouseup', onPointerUp);
+      window.removeEventListener('touchmove', onPointerMove);
+      window.removeEventListener('touchend', onPointerUp);
+
+      clearDupTimers();
+
+      if (ghostBlock) {
+        ghostBlock.remove();
+        ghostBlock = null;
+
+        const endX = upEvent.changedTouches ? upEvent.changedTouches[0].clientX : upEvent.clientX;
+        const endY = upEvent.changedTouches ? upEvent.changedTouches[0].clientY : upEvent.clientY;
+
+        // Find which timeline track it was dropped onto
+        let droppedOnDay = null;
+        days.forEach(d => {
+          const track = document.getElementById(`track-${d}`);
+          if (track) {
+            const tRect = track.getBoundingClientRect();
+            if (endX >= tRect.left && endX <= tRect.right &&
+                endY >= tRect.top && endY <= tRect.bottom) {
+              droppedOnDay = d;
+            }
+          }
+        });
+
+        if (droppedOnDay && !plannerData[droppedOnDay].locked) {
+          const track = document.getElementById(`track-${droppedOnDay}`);
+          const tRect = track.getBoundingClientRect();
+          const cursorXOnTrack = endX - tRect.left;
+          const actualLeftEdgeX = cursorXOnTrack - grabOffsetX;
+          const snappedMins = calculateLeftEdgeMinutes(actualLeftEdgeX);
+
+          // Remove from old location and push to new
+          plannerData[movingSourceContext.day].blocks.splice(movingSourceContext.idx, 1);
+          draggedBlock.startMinutes = snappedMins;
+          plannerData[droppedOnDay].blocks.push(draggedBlock);
+        }
+
+        draggedBlock = null;
+        movingSourceContext = null;
+        saveData();
+        renderDays();
+        updateCalculations();
+        return;
+      }
+
+      // Handle Single Click and Double Click (Delete) logic
+      if (!isMoved && !isDuplicating) {
+        clickCount++;
+        if (clickCount === 1) {
+          clickTimer = setTimeout(() => {
+            clickCount = 0;
+          }, 300);
+        } else if (clickCount === 2) {
+          clearTimeout(clickTimer);
+          clickCount = 0;
+          // Requirement 2: Double Click Deletes the block
+          plannerData[day].blocks.splice(idx, 1);
+          saveData();
+          renderDays();
+          updateCalculations();
+        }
+      }
+    }
+
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
+    window.addEventListener('touchmove', onPointerMove, { passive: false });
+    window.addEventListener('touchend', onPointerUp);
   }
 
-  function cancelHoldTimers() {
-    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+  function clearDupTimers() {
+    if (dupTimer) { clearTimeout(dupTimer); dupTimer = null; }
     if (dupInterval) { clearInterval(dupInterval); clearTimeout(dupInterval); dupInterval = null; }
   }
 
@@ -460,27 +553,6 @@
     plannerData[day].locked = !plannerData[day].locked;
     saveData();
     renderDays();
-  }
-
-  function handleBlockClick(day, index) {
-    if (plannerData[day].locked) {
-      const block = plannerData[day].blocks[index];
-      if (!block.completed) {
-        activeBlockContext = { day, index };
-        openSubjectDialog();
-      } else {
-        block.completed = false;
-        block.assignedSubject = null;
-        saveData();
-        renderDays();
-        updateCalculations();
-      }
-    } else {
-      plannerData[day].blocks.splice(index, 1);
-      saveData();
-      renderDays();
-      updateCalculations();
-    }
   }
 
   function openSubjectDialog() {
@@ -594,13 +666,7 @@
             const actualLeftEdgeX = cursorXOnTrack - grabOffsetX;
             const snappedMins = calculateLeftEdgeMinutes(actualLeftEdgeX);
 
-            if (draggedBlock) {
-              draggedBlock.startMinutes = snappedMins;
-              plannerData[day].blocks.push(draggedBlock);
-              draggedBlock = null;
-            } else {
-              plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false, assignedSubject: null });
-            }
+            plannerData[day].blocks.push({ startMinutes: snappedMins, completed: false, assignedSubject: null });
 
             saveData();
             renderDays();
@@ -679,7 +745,6 @@
       const tr = document.createElement('tr');
       if (isSpecial) tr.className = 'special-row';
 
-      // Read-only subject names (no editing inputs)
       tr.innerHTML = `
         <td style="text-align: left; font-weight: 600; ${isSpecial ? 'color: var(--primary-dark);' : ''}">
           <span class="subject-tag" style="background-color: ${item.color};"></span>
@@ -719,3 +784,4 @@
 </script>
 </body>
 </html>
+
